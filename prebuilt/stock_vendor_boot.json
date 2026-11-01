@@ -1,0 +1,1277 @@
+{
+  "avb_footer": true,
+  "board_name": "",
+  "bootconfig": "androidboot.hardware=ums9230_6h10\n",
+  "bootconfig_size": 34,
+  "dtb_addr": 32505856,
+  "dtb_sha256": "b642b487916c309363413b07d67226c7a620c8ea1c17b686022bb02322e44524",
+  "dtb_size": 129485,
+  "file_size": 104857600,
+  "header_size": 2128,
+  "header_version": 4,
+  "kernel_addr": 32768,
+  "modules_load": 72,
+  "modules_load_recovery": 139,
+  "page_size": 4096,
+  "partition_size": 104857600,
+  "ramdisk_addr": 88080384,
+  "ramdisk_table": [
+    {
+      "board_id": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "name": "",
+      "offset": 0,
+      "size": 25707163,
+      "type": 1
+    }
+  ],
+  "tags_addr": 256,
+  "vendor_cmdline": "console=ttyS1,115200n8 bootconfig bootconfig",
+  "vendor_entries": {
+    "first_stage_ramdisk": {
+      "gid": 0,
+      "mode": "0o40755",
+      "uid": 0
+    },
+    "first_stage_ramdisk/fstab.ums9230_14c10_go": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "efef71e3305a94fff71bde0f70725051e5ab8cc5c17e048beecbe89ba68fdc44",
+      "size": 1128,
+      "uid": 0
+    },
+    "first_stage_ramdisk/fstab.ums9230_1h10": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "efef71e3305a94fff71bde0f70725051e5ab8cc5c17e048beecbe89ba68fdc44",
+      "size": 1128,
+      "uid": 0
+    },
+    "first_stage_ramdisk/fstab.ums9230_1h10_go": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "efef71e3305a94fff71bde0f70725051e5ab8cc5c17e048beecbe89ba68fdc44",
+      "size": 1128,
+      "uid": 0
+    },
+    "first_stage_ramdisk/fstab.ums9230_4h10": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "efef71e3305a94fff71bde0f70725051e5ab8cc5c17e048beecbe89ba68fdc44",
+      "size": 1128,
+      "uid": 0
+    },
+    "first_stage_ramdisk/fstab.ums9230_4h10_go": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "efef71e3305a94fff71bde0f70725051e5ab8cc5c17e048beecbe89ba68fdc44",
+      "size": 1128,
+      "uid": 0
+    },
+    "first_stage_ramdisk/fstab.ums9230_6h10": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "efef71e3305a94fff71bde0f70725051e5ab8cc5c17e048beecbe89ba68fdc44",
+      "size": 1128,
+      "uid": 0
+    },
+    "first_stage_ramdisk/fstab.ums9230_6h10_go": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "efef71e3305a94fff71bde0f70725051e5ab8cc5c17e048beecbe89ba68fdc44",
+      "size": 1128,
+      "uid": 0
+    },
+    "first_stage_ramdisk/system": {
+      "gid": 0,
+      "mode": "0o40755",
+      "uid": 0
+    },
+    "first_stage_ramdisk/system/bin": {
+      "gid": 0,
+      "mode": "0o40755",
+      "uid": 0
+    },
+    "first_stage_ramdisk/system/bin/defrag.f2fs": {
+      "gid": 0,
+      "link": "fsck.f2fs",
+      "mode": "0o120644",
+      "uid": 0
+    },
+    "first_stage_ramdisk/system/bin/dump.f2fs": {
+      "gid": 0,
+      "link": "fsck.f2fs",
+      "mode": "0o120644",
+      "uid": 0
+    },
+    "first_stage_ramdisk/system/bin/e2fsck": {
+      "gid": 0,
+      "mode": "0o100755",
+      "sha256": "72afc7a8639d3f2479f6c8df3b0dbc4fa5b0531d92773136f784d74f12f9b0aa",
+      "size": 353336,
+      "uid": 0
+    },
+    "first_stage_ramdisk/system/bin/fsck.f2fs": {
+      "gid": 0,
+      "mode": "0o100755",
+      "sha256": "f72272a9cde6f014bd527e5fe30d9f0d8f3a99b770e50c4a5b541c330b0ae73e",
+      "size": 335424,
+      "uid": 0
+    },
+    "first_stage_ramdisk/system/bin/linker64": {
+      "gid": 0,
+      "mode": "0o100755",
+      "sha256": "c7404ebabd20cfdb9e7638a17141b749c329bbc5ceeb593da356767e752afbf0",
+      "size": 2052376,
+      "uid": 0
+    },
+    "first_stage_ramdisk/system/bin/linker_asan64": {
+      "gid": 0,
+      "link": "linker64",
+      "mode": "0o120644",
+      "uid": 0
+    },
+    "first_stage_ramdisk/system/bin/linker_hwasan64": {
+      "gid": 0,
+      "link": "linker64",
+      "mode": "0o120644",
+      "uid": 0
+    },
+    "first_stage_ramdisk/system/bin/resize.f2fs": {
+      "gid": 0,
+      "link": "fsck.f2fs",
+      "mode": "0o120644",
+      "uid": 0
+    },
+    "first_stage_ramdisk/system/bin/snapuserd": {
+      "gid": 0,
+      "mode": "0o100755",
+      "sha256": "ffa273034d6d6cb8281b8cfdb27e7b76548f2d9b0564e95824fbecbf6776ca07",
+      "size": 1168128,
+      "uid": 0
+    },
+    "first_stage_ramdisk/system/lib64": {
+      "gid": 0,
+      "mode": "0o40755",
+      "uid": 0
+    },
+    "first_stage_ramdisk/system/lib64/ld-android.so": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "7f0ac1ddbc1a918d30473cef5ce8df5cd3a26d71c08a9f6f40d92a7ca94e2043",
+      "size": 132280,
+      "uid": 0
+    },
+    "first_stage_ramdisk/system/lib64/libbase.so": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "188a33ecdc02576493364d1ede322f4e54045210e0deeac089991eff05150b47",
+      "size": 337400,
+      "uid": 0
+    },
+    "first_stage_ramdisk/system/lib64/libc++.so": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "fd8158583a6ada70c7ac30347c1583de8dc77f529ca7124cb3e10d593a35236c",
+      "size": 819944,
+      "uid": 0
+    },
+    "first_stage_ramdisk/system/lib64/libc.so": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "34764c956921525cc9d6ddf922b25a8ae531304399ce5970af73efa065fae64a",
+      "size": 1231680,
+      "uid": 0
+    },
+    "first_stage_ramdisk/system/lib64/libdl.so": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "26bc3f69c2e51373c44bfee4c22451d2e12dab3cae5e61af361e2eb72141e763",
+      "size": 136608,
+      "uid": 0
+    },
+    "first_stage_ramdisk/system/lib64/libext2_blkid.so": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "70f23d0661e352d803c97a4bbb17287546cec430b3d6c928e02ed5d16ece0c88",
+      "size": 138904,
+      "uid": 0
+    },
+    "first_stage_ramdisk/system/lib64/libext2_com_err.so": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "9d5634c726b7a338ef471b39e2fd2a60cbda64e4bf3fbd2f0623addf3dfe7c91",
+      "size": 133976,
+      "uid": 0
+    },
+    "first_stage_ramdisk/system/lib64/libext2_e2p.so": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "ab852a6be53c4f86b6f9b8bd36b398481ea3329c4f26d9e32759854bc2cb9046",
+      "size": 135816,
+      "uid": 0
+    },
+    "first_stage_ramdisk/system/lib64/libext2_quota.so": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "21942f600e3bf9b7a203189e32983f2e535df9a411d8a5e91879cbd82250c8f5",
+      "size": 135592,
+      "uid": 0
+    },
+    "first_stage_ramdisk/system/lib64/libext2_uuid.so": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "05b2b77ca2914356c4f1b24cd1e8ae28a85c8d7e6d9ab18bd2dacf6d318be57e",
+      "size": 133816,
+      "uid": 0
+    },
+    "first_stage_ramdisk/system/lib64/libext2fs.so": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "1e67bb9ca487ec5336645c119a6bcb9bddefef9196de0cff3e973e37a39b2b44",
+      "size": 470112,
+      "uid": 0
+    },
+    "first_stage_ramdisk/system/lib64/liblog.so": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "e8e9f129a36a6c0145d08574a6b80731bdd63e38fc7d24432c85f67974c263cc",
+      "size": 136016,
+      "uid": 0
+    },
+    "first_stage_ramdisk/system/lib64/libm.so": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "ff780dcc9008e05eefb5a2b11cf2277c25a5a30b55070a3984626dbb75d96de9",
+      "size": 331656,
+      "uid": 0
+    },
+    "first_stage_ramdisk/system/lib64/libsparse.so": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "66c714cd39cc6c5a7b73a68f5c059fa65fbde873942507da4b0fe666917add14",
+      "size": 135424,
+      "uid": 0
+    },
+    "first_stage_ramdisk/system/lib64/libz.so": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "3470b0c7a73e598207d6eaed7297def5288b09c0ccd936abbe91023af486c41a",
+      "size": 200408,
+      "uid": 0
+    },
+    "lib/modules": {
+      "gid": 0,
+      "mode": "0o40755",
+      "uid": 0
+    },
+    "lib/modules/agdsp_pd.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "d70a986d24e137ec3176861c5981f52c40cf2dc7d4afcadb5e8e62565da2baad",
+      "size": 44944,
+      "uid": 0
+    },
+    "lib/modules/apsys-dvfs.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "68b6b6f2f3328f166713170e455dcbab4e288d8ab2944e27be95fedfa1922d52",
+      "size": 355648,
+      "uid": 0
+    },
+    "lib/modules/audio-dsp-dump.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "3bcd90b388764a5e8c8ddd360060ea6d25c9b7470a79a52dba143492985bf63d",
+      "size": 87592,
+      "uid": 0
+    },
+    "lib/modules/audio-pipe.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "36c901f7ea7df49193418f13201f28033d1064cd7836db04a2ef5fbaf08b3d0e",
+      "size": 51200,
+      "uid": 0
+    },
+    "lib/modules/audio_mem.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "a9b1861fc20af729f7a28de1adaf5d4f2d1e348a1dc5b5ebe58fbb8c2840b36d",
+      "size": 53192,
+      "uid": 0
+    },
+    "lib/modules/audio_sipc.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "f31030c5ae326137f16cb800da030e369524a9558033bf0ac316f2fd9c68b0e0",
+      "size": 98072,
+      "uid": 0
+    },
+    "lib/modules/clk-sprd.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "e0d6d43f98ff58778a797ffa9b3dca67ee39bf48a4910f10362d2373be5b1edf",
+      "size": 45048,
+      "uid": 0
+    },
+    "lib/modules/cma_heap.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "58cda0294739a3103a7237b88ba1af69ee36c2b216d420acd132e669762c113d",
+      "size": 47176,
+      "uid": 0
+    },
+    "lib/modules/core.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "efa55b9d60b699b69a311143c972b03d98b1ee3b57087d79c74a7e97459fd629",
+      "size": 20704,
+      "uid": 0
+    },
+    "lib/modules/extcon-usb-gpio.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "a97f9cd899402ac95d910c377e8d66282d0cb5cfcd27f1df3ca58331982b3f3c",
+      "size": 20384,
+      "uid": 0
+    },
+    "lib/modules/gpio-eic-sprd.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "ca2c0612bbd6a5370858ddc6bd70d0e877b3fb2db31604275a493affe0afbeb6",
+      "size": 35656,
+      "uid": 0
+    },
+    "lib/modules/gpio-pmic-eic-sprd.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "412fa900c62ec1112740bbfcd949449a55af1ee4fd04e1e5ea0a7862ee93fb5e",
+      "size": 24208,
+      "uid": 0
+    },
+    "lib/modules/gpio-sprd.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "2676abd588c83aade3823d5abaca5d141200ac357c5c7c69ee5988f2d614b5c5",
+      "size": 24712,
+      "uid": 0
+    },
+    "lib/modules/gpio.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "3492019b69af71fc2b2bca441608c5d876734e068b37e1568a7f33b92ed114c7",
+      "size": 20224,
+      "uid": 0
+    },
+    "lib/modules/i2c-sprd-hw-v2.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "20dda56ddd7827545534bb78f6b353e3492c9b1cf1e5ad0cf2815270726f61e2",
+      "size": 29920,
+      "uid": 0
+    },
+    "lib/modules/i2c-sprd.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "43e31c5a9064da0f2a2d2dfd05ce1a956a2292db4ab75ab7ab481853b4356ba3",
+      "size": 46184,
+      "uid": 0
+    },
+    "lib/modules/iolimit.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "481dd02e802aaadf3bfcef091447d9fee4047cf50a541c020f890f83629ced10",
+      "size": 34120,
+      "uid": 0
+    },
+    "lib/modules/ion_ipc_trusty.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "acc35a18185282db32c9df6d88e3e5a2bd3f38b29c6d6b0f3beae1ac6d79755a",
+      "size": 23928,
+      "uid": 0
+    },
+    "lib/modules/jpg.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "129f6e876d820a2e167c5462a12fe8124703bf4b8afba458083bd44f37373374",
+      "size": 91232,
+      "uid": 0
+    },
+    "lib/modules/leds-sc27xx-bltc.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "0d07b592b139e01248a795dc688c5ce002c59e207c975c68083a9827cd6257ee",
+      "size": 20208,
+      "uid": 0
+    },
+    "lib/modules/ledtrig-pattern.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "33f18eae1301203863459b17444abf499c873b5db8f0eed1ef6b617e0630bff9",
+      "size": 24008,
+      "uid": 0
+    },
+    "lib/modules/mcdt_hw_r2p0.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "854717c1007177e4cb1b8897bb9d2e0b17704b2eb5d74e38e4903ba9c9b989fb",
+      "size": 61944,
+      "uid": 0
+    },
+    "lib/modules/mmc_hsq.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "6e05f871bd0d2cdc137c453c75716b9ce22ad6b794c03b62ae30c6bc7b255eda",
+      "size": 23312,
+      "uid": 0
+    },
+    "lib/modules/mmc_swcq.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "5786212ff005fa133b0010d10d550021bcd640d0cd2ba95a00c5472ce1a87e24",
+      "size": 95552,
+      "uid": 0
+    },
+    "lib/modules/modules.alias": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "856c4db61ff7ff7aa1a6e4866fcde6a7410ac29487e7dbb5b57919bbe350caa9",
+      "size": 17664,
+      "uid": 0
+    },
+    "lib/modules/modules.dep": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "e31178f91a45183ca3046704c77fba015e0f73744ea02aa85bb7d3b3262752dc",
+      "size": 11755,
+      "uid": 0
+    },
+    "lib/modules/modules.load": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "4ba16f3c712f73457b4e44a733eb84d99b940ca3040a4e5fca0c219246c01535",
+      "size": 1133,
+      "uid": 0
+    },
+    "lib/modules/modules.load.recovery": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "63346eb76e3f203aee9dc010ec692e9580b7e9390985e79e4207246c779fb888",
+      "size": 2308,
+      "uid": 0
+    },
+    "lib/modules/modules.softdep": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "ac2de753255c506934be29e69261f1485f51ee9cf9c2bf467bcc0c4cf95f8713",
+      "size": 55,
+      "uid": 0
+    },
+    "lib/modules/musb_hdrc.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "d20b4e398718eb482088659d15e374ded40c4f87cb60265e32230ef9daf68706",
+      "size": 520608,
+      "uid": 0
+    },
+    "lib/modules/musb_sprd.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "a17952b2bd0c931e615498a30c617e66f40ba9c18ac2a73b0ffe04186f84e639",
+      "size": 123824,
+      "uid": 0
+    },
+    "lib/modules/native_hang_monitor.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "9f1ce8527e6721cdedd75ca680ac05d8dae78f3a7e0c02fd5624250276f04dcf",
+      "size": 64624,
+      "uid": 0
+    },
+    "lib/modules/nvmem-sc27xx-efuse.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "69d12628f10edfb4d0c279ba5de9c202cfda86a3ca7c09cfd3f249d01278342e",
+      "size": 20704,
+      "uid": 0
+    },
+    "lib/modules/nvmem_sprd_cache_efuse.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "44fab7d23c2ca052e705205fd33baa2782ecff5bc4d6b2e9d5cb71176768e19e",
+      "size": 16152,
+      "uid": 0
+    },
+    "lib/modules/nvmem_sprd_efuse.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "0e6a29b8477a624769b13397359ea74ca73584c980c12dc3e8af4a3e525dc1bb",
+      "size": 22152,
+      "uid": 0
+    },
+    "lib/modules/phy-sprd-commonphy.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "8409803b4d24a5b25ffa37b3427625b5870a8cdb3898ba20d8bfa4f77642eac5",
+      "size": 14176,
+      "uid": 0
+    },
+    "lib/modules/phy-sprd-qogirl6.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "6a1cff5404083bf70cbd1941903121e1a86d575151df70007e8b09716fb997ce",
+      "size": 42616,
+      "uid": 0
+    },
+    "lib/modules/pinctrl-sprd-qogirl6.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "f9d318819a9a95cf8e39cf0c85825c5bdffa30f3bb2c37f4c7d597fe306127c7",
+      "size": 48088,
+      "uid": 0
+    },
+    "lib/modules/pinctrl-sprd.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "895ec5af04a51a5fc615c658f898752e38f53d7163f6001aa14f9de9b6040916",
+      "size": 34960,
+      "uid": 0
+    },
+    "lib/modules/pinctrl.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "73c674e14cb03937c1f08f4afe22d4442f55a34cd22de9b159d5d587a764a2e1",
+      "size": 18224,
+      "uid": 0
+    },
+    "lib/modules/printk_cpuid.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "75c05e6e5a22a60a97b737b45eed1e93a3347cc5873ad2a8513ea0c0d2914f5c",
+      "size": 16512,
+      "uid": 0
+    },
+    "lib/modules/psc2965-charger.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "41e57073b8eb732b6aefdadc5ce886dcd822c691289100348cea111f637d6019",
+      "size": 78424,
+      "uid": 0
+    },
+    "lib/modules/pwm-sprd.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "47b8f6d4988ea95a7110091509e1adb8d29791d207cd4f1eea36833534b770c1",
+      "size": 20928,
+      "uid": 0
+    },
+    "lib/modules/regmap-hook.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "7506812f4c087212236f4c3bd780915de9e3f78f2427fcf9e0a6492b447d861a",
+      "size": 12768,
+      "uid": 0
+    },
+    "lib/modules/rpmb.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "fc427d2201fa4c6a446c4ff3b2b317919b703b20b50c32d763dbd5bc110b8c15",
+      "size": 54872,
+      "uid": 0
+    },
+    "lib/modules/rtc-sc27xx.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "05dc9d3542bd61d0f30932b841d6852f5b715e4170e542e2f2fd067b85be78f3",
+      "size": 27472,
+      "uid": 0
+    },
+    "lib/modules/sblock_bridge.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "495340ca969706d1026d1473331c69c53d4f7033369ad640845c64acdd9a64ec",
+      "size": 23352,
+      "uid": 0
+    },
+    "lib/modules/sbuf_bridge.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "f3afe2c4a29c6ee36338480246eafb66a5ec00b9fca0ab90d18352723c55029f",
+      "size": 24184,
+      "uid": 0
+    },
+    "lib/modules/sc2730-regulator.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "0a67bd20ae307aa6bf134aefa2a4ed97a531f16a039a227dbb6564de08be235c",
+      "size": 41616,
+      "uid": 0
+    },
+    "lib/modules/sc27xx-poweroff.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "eac27345b065e61132c329b3717d2bbd140c0ea2ae32ba2dd9d2eae44e0309b1",
+      "size": 21944,
+      "uid": 0
+    },
+    "lib/modules/sc27xx-vibra.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "3831608db022a08cf96578e0c29d09d79ef1f89336b31c864ffb5c6a79c890e4",
+      "size": 17720,
+      "uid": 0
+    },
+    "lib/modules/sc27xx_adc.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "90ae000037b48bbcbaf1739a541d0132b680423f4d981299757f8b06b6bbc3ab",
+      "size": 74280,
+      "uid": 0
+    },
+    "lib/modules/sc27xx_fuel_gauge.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "e7736635bb2248574deb08aa677f3f27b1ce54d3bdb9acd038b18846da8b8ec8",
+      "size": 201248,
+      "uid": 0
+    },
+    "lib/modules/sc27xx_typec.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "14c74a228b820e42c1ae8e5bc4809c9b583581a86ac37b4e0cc29eed1b6fa308",
+      "size": 52560,
+      "uid": 0
+    },
+    "lib/modules/sdhci-sprd.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "133cbeee1e22201489d105b4f90b1c87376644451c2ccc12f91a6cae5c10e418",
+      "size": 232232,
+      "uid": 0
+    },
+    "lib/modules/sensorhub.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "f592afd972722207e9dcb6da61da5d2a950dadde367869e6bda3caabef96894e",
+      "size": 83784,
+      "uid": 0
+    },
+    "lib/modules/seth.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "f859c725f99e57d30e269fce39622a53f70a6255a64b98e37e8c7ea5ef560416",
+      "size": 67024,
+      "uid": 0
+    },
+    "lib/modules/shutdown_detect.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "cef7dac4e5adb7afc605f8903cc0a3696963cc89b1c1cb8598dcab03459d22c7",
+      "size": 27440,
+      "uid": 0
+    },
+    "lib/modules/sipc-core.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "45ecabb91fce76a96a564f27df9a6731853307a7396c0cfc6249b7c98de22b8b",
+      "size": 265168,
+      "uid": 0
+    },
+    "lib/modules/sipx.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "04307e17bf66e9588506bb80fe7452d5167f67f8ccdeb3bd74af27780bb9bce0",
+      "size": 70896,
+      "uid": 0
+    },
+    "lib/modules/slog_bridge.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "d2b971bd8886bf8350a362a7d7b4c6daef3433271466d2347df8c309f8b74418",
+      "size": 37608,
+      "uid": 0
+    },
+    "lib/modules/snd-soc-sprd-card.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "0d76f357019121a30dd85cbbfc5ab6980479aa1361dee541f7c9709990b06b44",
+      "size": 164456,
+      "uid": 0
+    },
+    "lib/modules/snd-soc-sprd-codec-sc2730-power-dev.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "3ef09a563e3dbc714d3e9494cadfd133b5c2846cb27d301ce45123cb29e6032f",
+      "size": 27208,
+      "uid": 0
+    },
+    "lib/modules/snd-soc-sprd-codec-sc2730-power.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "551ed22e1b0e956d11c8118121e154b5579d930ae3cfae9677ccf84a767cc89c",
+      "size": 45264,
+      "uid": 0
+    },
+    "lib/modules/snd-soc-sprd-codec-sc2730.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "e0623d0d154ca415a6aec78cf8cc36bc85f6c031b10215fd206e9deebbcd92b2",
+      "size": 442216,
+      "uid": 0
+    },
+    "lib/modules/snd-soc-sprd-dummy-codec.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "83a1237a5bd45b8b01341dc38acfd1cf1f9c8599aa848f89eae465327bbbd938",
+      "size": 13872,
+      "uid": 0
+    },
+    "lib/modules/snd-soc-sprd-pdm-r2p0.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "225bfa5086ef3c870dd6bc27003ba14507cef98245289eac8778236ca08d38ca",
+      "size": 56776,
+      "uid": 0
+    },
+    "lib/modules/snd-soc-sprd-vbc-fe.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "87c4a6f84e4bd8d2d1522cbc374dbf20354d17e80564a62d17e7f549b42b68b5",
+      "size": 52736,
+      "uid": 0
+    },
+    "lib/modules/snd-soc-sprd-vbc-v4.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "51c3ab68b10e58a20de718e5e581fee11d3749a67bb9705428beb47e7b589d79",
+      "size": 1020888,
+      "uid": 0
+    },
+    "lib/modules/spi-sprd-adi.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "3a777d0b3aff6bdbdf2a2eab16910c794eba72fc9d1fd26f95b80667f0ffae91",
+      "size": 35248,
+      "uid": 0
+    },
+    "lib/modules/spi-sprd.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "ec0723d939d47217d9f5b7de90062355c575c580dc6487740d456c2e7082e6af",
+      "size": 48792,
+      "uid": 0
+    },
+    "lib/modules/spipe.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "1b3c144ca7a826dacb873ea7fd97193fd1995d72f44a7e2db1f689df07f9c1af",
+      "size": 27104,
+      "uid": 0
+    },
+    "lib/modules/spool.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "fdb0b566ccb075a51c589cd01a2d0c0c104a538f21485c6921d02eb4c95e8038",
+      "size": 35912,
+      "uid": 0
+    },
+    "lib/modules/sprd-bc1p2.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "33c0ac000d854e8938fb8220d319d48fadec42052ae21377fbdcb54f00fc03e3",
+      "size": 34520,
+      "uid": 0
+    },
+    "lib/modules/sprd-charger-manager.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "d1a6ad158feab5926f102dba7ae6ec59ecc106f42c3766fbb1b71d90adce2a91",
+      "size": 335496,
+      "uid": 0
+    },
+    "lib/modules/sprd-compr-2stage-dma.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "a0242b5a856f43c9e714aa7589224b54964f3f19938c06ef7debd8503d52adaf",
+      "size": 101712,
+      "uid": 0
+    },
+    "lib/modules/sprd-cpufreq-v2.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "b9c775ddb6cffd262504cb2aa6f2da2bc153cdc3078ddd317d55d3b60011f08c",
+      "size": 67512,
+      "uid": 0
+    },
+    "lib/modules/sprd-dma.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "1e4609d501b32e6dd94bf6505b0fd68ae2fda50d2cfc75c0bf1aad25f3944b76",
+      "size": 45560,
+      "uid": 0
+    },
+    "lib/modules/sprd-dmabuf.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "ec805fb15a767a7f5edafb1eb4d04cc5e1afdf06b280323ac9310baeebe198d4",
+      "size": 56632,
+      "uid": 0
+    },
+    "lib/modules/sprd-dmaengine-pcm.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "a9ed7a8f935de56d8a4512ac3347631d455d97ca19783384dbbbab02aa818b97",
+      "size": 93296,
+      "uid": 0
+    },
+    "lib/modules/sprd-drm.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "5b9e0bff03c8cfc8136315718678e9d212a404123d1dda36976c107f2dd13297",
+      "size": 1566632,
+      "uid": 0
+    },
+    "lib/modules/sprd-gsp.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "96d7282569e82455697c3389cf602d78c05af7f0cb0e9ee09537bf11555ea0d4",
+      "size": 774608,
+      "uid": 0
+    },
+    "lib/modules/sprd-platform-pcm-routing.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "721022cdbb11ed3130cb1f5d35b342578e1864f8fed0fe067c78b726f87232b0",
+      "size": 173904,
+      "uid": 0
+    },
+    "lib/modules/sprd-pmic-spi.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "d7f8afcc242ec4cb7a95b5f40034583feef6698345b69bcb75753bd7caff628b",
+      "size": 28008,
+      "uid": 0
+    },
+    "lib/modules/sprd-sipc-virt-bus.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "c7f2d3b4456d8f4b872bc76e8b0c92ff46c496f3599d8087020132e29ccc245c",
+      "size": 12520,
+      "uid": 0
+    },
+    "lib/modules/sprd-vsp-pw-domain.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "1607c91e2bf89665d22b0490ec9b51ccbceba6b8829bbf2fc730306e7cc982c3",
+      "size": 20904,
+      "uid": 0
+    },
+    "lib/modules/sprd_7sreset.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "8188cc0384c88b9ed017d25136f066474bc44b07d5abf96e605455472aa43016",
+      "size": 24176,
+      "uid": 0
+    },
+    "lib/modules/sprd_apipe.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "1192b6216391c0daf560abd7acd6a0210bccb76148ff8dc95692dd35600c6fff",
+      "size": 43336,
+      "uid": 0
+    },
+    "lib/modules/sprd_audcp_boot.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "99fa5935f4eab8058233efb29413571cd4273d487634dcd133f7f031a85219c9",
+      "size": 23432,
+      "uid": 0
+    },
+    "lib/modules/sprd_audcp_dvfs.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "95b9569c23272d6b6dba2b0926413cb8e868fb1d8b3424f8f954aa25a2533f80",
+      "size": 86328,
+      "uid": 0
+    },
+    "lib/modules/sprd_battery_info.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "ea703659c1bd69f804ef71666d4927d61e438cb7e18da97520b389ddf8e2a3b8",
+      "size": 34480,
+      "uid": 0
+    },
+    "lib/modules/sprd_cache_print.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "e1f20ed3a74756b8a803dfeb9b0326808fb63924f9bd1b3afa54fa001f07b0a4",
+      "size": 15328,
+      "uid": 0
+    },
+    "lib/modules/sprd_camera.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "d597e740064d04cda7aabeeac5c3725d788ab58d78265f8dfa20395879568599",
+      "size": 3394808,
+      "uid": 0
+    },
+    "lib/modules/sprd_camsys_pw_domain.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "68e6efec0129f71f6ab758f5caaae3c3bc3f93b2c43f9f9238ac950896f94ced",
+      "size": 124216,
+      "uid": 0
+    },
+    "lib/modules/sprd_cp_dump.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "e67a03d50ca5a6674ff8857b95bf89b6479bf04a0715523739b56663051cdf25",
+      "size": 31864,
+      "uid": 0
+    },
+    "lib/modules/sprd_cpp.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "40bdd53fcce8114ff672c1747f719a2d5ff8ef0a6cd660ef8ac54b840fa10429",
+      "size": 233920,
+      "uid": 0
+    },
+    "lib/modules/sprd_flash_drv.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "0b794673df693829981b269e5456494dbdfdb75d123d95c2c09971c9e17fa2a3",
+      "size": 32936,
+      "uid": 0
+    },
+    "lib/modules/sprd_hwspinlock.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "29b90c3f9a7e8339162d081b0aa51889d702faee4de669a259b6c8f10ace1bac",
+      "size": 18272,
+      "uid": 0
+    },
+    "lib/modules/sprd_iq.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "8e862fd46aa379b967602d9a587f9a08704c211e2390616b951d4ceab92afe5b",
+      "size": 35472,
+      "uid": 0
+    },
+    "lib/modules/sprd_modem_loader.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "a89c9d7214ee90a5d99834c4dea503a02779afdfa6c69a52b3cec0ce22e4a655",
+      "size": 66216,
+      "uid": 0
+    },
+    "lib/modules/sprd_pdbg.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "15a1973a61d48f261746af6d09fa4b83d29198ac6e73a852c3b419705c954080",
+      "size": 93992,
+      "uid": 0
+    },
+    "lib/modules/sprd_pmic_syscon.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "7e3298bd3d39a68341802445c7e68cf5ecb3b7d4c09ae06ddb6b10429f917a5c",
+      "size": 19552,
+      "uid": 0
+    },
+    "lib/modules/sprd_power_manager.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "247e94cab4daa96407d63e65a9edfbb1ed5063488d067ca03fe9a65bdc7b6192",
+      "size": 55008,
+      "uid": 0
+    },
+    "lib/modules/sprd_sensor.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "e7348fc87d8c8f1bd956d204e5cd6b00c741ac4c8b6ca556ef3e9e95e359bcfa",
+      "size": 195048,
+      "uid": 0
+    },
+    "lib/modules/sprd_shm.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "856edc50531e5bbf83bcbd1f4830f002a37e89fa593131b964fd7b492c44fe35",
+      "size": 30648,
+      "uid": 0
+    },
+    "lib/modules/sprd_sip_svc.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "7cdd6ecbaa8b7d3c500fe3fc7b91637fc78416b293ba362785d0304801895a2c",
+      "size": 35944,
+      "uid": 0
+    },
+    "lib/modules/sprd_soc_id.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "1af9e05dfde661d51fe19843f27ecd93a5325b22945eb0926391cae6cc7f7476",
+      "size": 21952,
+      "uid": 0
+    },
+    "lib/modules/sprd_soc_thm.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "9daee5a3e2889663ce13ee19191e1feb2cfa9adf1c1eebcc349d4ca88542c747",
+      "size": 16216,
+      "uid": 0
+    },
+    "lib/modules/sprd_systimer.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "00834224d7f56c7e1ad8dd7ee648f24212352874186e6f85eee9bde8681a3108",
+      "size": 20048,
+      "uid": 0
+    },
+    "lib/modules/sprd_tcpm.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "6a3ec65d4aff095f4c168456a314ba14560322c22ed6ce87e54fce1245198aae",
+      "size": 173688,
+      "uid": 0
+    },
+    "lib/modules/sprd_thermal.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "a643937d826e35f08381d630a47d39c6f5daa383fcef3561badd439450acb93c",
+      "size": 26152,
+      "uid": 0
+    },
+    "lib/modules/sprd_thermal_ctl.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "312229134ec3df6243d07091e09ad12dd00451d601d4a37375644f248de61aa7",
+      "size": 37192,
+      "uid": 0
+    },
+    "lib/modules/sprd_time_sync.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "220fa1df93db227e186ebc0e1cf5a3c77cc53847c0f6361248e896f44331ef51",
+      "size": 28520,
+      "uid": 0
+    },
+    "lib/modules/sprd_time_sync_cp.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "4eda4cbdce2e111cf1d874b4355f03b62430f944cfca9060bb5720ca580ee2e0",
+      "size": 10616,
+      "uid": 0
+    },
+    "lib/modules/sprd_trng.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "9a6e20f884401f08dd2b2f89744dc676e92d76ea0d16efa2367ff11440bbdc34",
+      "size": 21552,
+      "uid": 0
+    },
+    "lib/modules/sprd_typec_displayport.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "01976c95b27d7be9fed14277180b8e86633a22778321cfd6f20c3f8fcff09e2a",
+      "size": 29712,
+      "uid": 0
+    },
+    "lib/modules/sprd_u_ether.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "2eb870ea8a05a8c46805a43a127659a693fa27ebbc9853362198db4df42eb128",
+      "size": 70680,
+      "uid": 0
+    },
+    "lib/modules/sprd_u_serial.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "51b51fdc792846bd0dab9abf634505a6ce341fff580f709e00555be6c96f795f",
+      "size": 51656,
+      "uid": 0
+    },
+    "lib/modules/sprd_uid.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "7885dd81d3512b9a516c430d296ccd33e309db26e5fcf3c4b3edd2a157b2e34e",
+      "size": 15616,
+      "uid": 0
+    },
+    "lib/modules/sprd_usb_f_rndis.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "04a99b8a8028e3c05ba012d0509f9f72784fb5696eb930279d3a12d254b457d6",
+      "size": 105832,
+      "uid": 0
+    },
+    "lib/modules/sprd_usb_f_serial.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "1825da1a1ab1344a6d186dda4c44815bd16c0791971784d8442ec01b72725652",
+      "size": 26688,
+      "uid": 0
+    },
+    "lib/modules/sprd_usbpinmux.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "727df39cd4e329c711c620b43477130981432573c9b1e27f5dcfa8dcea0d2a34",
+      "size": 17872,
+      "uid": 0
+    },
+    "lib/modules/sprd_wdt_fiq.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "c632a16b3a41785c52992fe3d2002a82f466734c5eb10de8f691cb155ef1a0fd",
+      "size": 34656,
+      "uid": 0
+    },
+    "lib/modules/sysdump.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "80ebe05d5b5cf1fa7b127a56d910cc8db79cbe86cc9b9ffd873de978aca80490",
+      "size": 179920,
+      "uid": 0
+    },
+    "lib/modules/system_heap.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "7fc0585043883db13e15a769533fd86726830a1bcffe375bfb0569b6ed8cf2b5",
+      "size": 36632,
+      "uid": 0
+    },
+    "lib/modules/timer-sprd.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "bc9782d529d3c19a58e015009ee6dcb4dc3b952283d8390a69cb0171007d916e",
+      "size": 20112,
+      "uid": 0
+    },
+    "lib/modules/trusty-ipc.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "65ab3690e0d025d4df3c97ecc26043b02b3abf04db152229838e2fc95d113a31",
+      "size": 94840,
+      "uid": 0
+    },
+    "lib/modules/trusty-irq.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "b9a7a3b06a73fbbfadfaed8b23d4593bc51801389ecfce5dbb6f974feca69deb",
+      "size": 42392,
+      "uid": 0
+    },
+    "lib/modules/trusty-log.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "e121e4fdafcf6da77939986c0d20ba3219b3238df9b006329359161253f40149",
+      "size": 29712,
+      "uid": 0
+    },
+    "lib/modules/trusty-pm.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "00032091a7dc11a114d676ac30f6e630ae8d7dfa9e45b8447f15561dc2287ba9",
+      "size": 14408,
+      "uid": 0
+    },
+    "lib/modules/trusty-tui.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "48261cc890ad2c516892bab6f5d8e57356390ffe5241e9e22364b44830b7fb4d",
+      "size": 25744,
+      "uid": 0
+    },
+    "lib/modules/trusty-virtio.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "c437da84fd264f92cac0075b5e5bef7e0e1c91ca1ce97bb000a81b44b821425c",
+      "size": 37200,
+      "uid": 0
+    },
+    "lib/modules/trusty.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "92d39c8b1ec430da72e0a18b8c9cdf67df432908ef71dfe99490076e20fe91e0",
+      "size": 59616,
+      "uid": 0
+    },
+    "lib/modules/ufs_sprd.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "e87eed415009c1af3dac65dc7c8377abe3280132cc6c23f28cc7280d6e5d84ef",
+      "size": 333808,
+      "uid": 0
+    },
+    "lib/modules/ums9230-clk.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "33f4f6dcd3b5c146a2b325c3cff95250520320da8b67f821db738e7fe1345b83",
+      "size": 334960,
+      "uid": 0
+    },
+    "lib/modules/unisoc-iommu.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "82f2afdb157bc04e9dcbe5f3594774230f54da977a3e2933e78c4f60868ec954",
+      "size": 165672,
+      "uid": 0
+    },
+    "lib/modules/unisoc-mailbox.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "72927ff83ea1fdc6d925995f8ae2d1f9703ff3467471ded3c8ae615704bbf311",
+      "size": 65384,
+      "uid": 0
+    },
+    "lib/modules/unisoc-sched.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "42b80a288923816eee426dadac3df4098e1667eed95e5549179971f27cf03c79",
+      "size": 428416,
+      "uid": 0
+    },
+    "lib/modules/unisoc_mm_emem.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "711f34e174e2899b3e762f1629a075e2d5b82efac162ee82a2a6c2f13992cb25",
+      "size": 32440,
+      "uid": 0
+    },
+    "lib/modules/unisoc_mm_reclaim.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "6254a51c3dd7637260426cb3f267aded56b4a9e9c3404931c3c8f7a5f8e4c018",
+      "size": 25184,
+      "uid": 0
+    },
+    "lib/modules/usb_f_vser.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "19630bb8f56fc425b7fb37afa5c651be9a365b0fa64adfb9f14f06e71b92b44d",
+      "size": 100032,
+      "uid": 0
+    },
+    "lib/modules/vpu.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "75883de53087746fa75d1127e7ce2bbb6504cb519e8c3a015a8579ef58755e43",
+      "size": 141240,
+      "uid": 0
+    },
+    "lib/modules/zram.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "8863eafe8697bfcf791149f5a31858fbac3b527561900d5addccde83bd6f17a2",
+      "size": 110336,
+      "uid": 0
+    },
+    "lib/modules/zsmalloc.ko": {
+      "gid": 0,
+      "mode": "0o100644",
+      "sha256": "84c6e6ab5c8b738de0fe783337b4abd1ad2a2e8bca2f186aebf5a967f67b7307",
+      "size": 82680,
+      "uid": 0
+    }
+  },
+  "vendor_ramdisk_total_size": 25707163
+}

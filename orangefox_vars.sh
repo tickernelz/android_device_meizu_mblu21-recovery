@@ -1,0 +1,29 @@
+#
+# SPDX-FileCopyrightText: 2026 Zhafron Adani Kautsar
+# SPDX-License-Identifier: Apache-2.0
+#
+
+export FOX_VENDOR_BOOT_RECOVERY=1
+export FOX_AB_DEVICE=1
+export FOX_VIRTUAL_AB_DEVICE=1
+export FOX_RECOVERY_SYSTEM_PARTITION=/dev/block/mapper/system
+export FOX_RECOVERY_VENDOR_PARTITION=/dev/block/mapper/vendor
+export FOX_BUILD_TYPE=Unofficial
+export FOX_VARIANT=UNTESTED
+export OF_MAINTAINER=tickernelz
+export OF_SCREEN_H=1600
+export OF_STATUS_H=45
+export OF_STATUS_INDENT_LEFT=48
+export OF_STATUS_INDENT_RIGHT=48
+export OF_ALLOW_DISABLE_NAVBAR=0
+export OF_USE_GREEN_LED=0
+export OF_FLASHLIGHT_ENABLE=0
+export OF_NO_SPLASH_CHANGE=1
+export OF_WIPE_METADATA_AFTER_DATAFORMAT=1
+export FOX_USE_BASH_SHELL=1
+export FOX_ASH_IS_BASH=1
+export FOX_USE_NANO_EDITOR=1
+export FOX_USE_TAR_BINARY=1
+export FOX_USE_SED_BINARY=1
+export FOX_USE_XZ_UTILS=1
+export FOX_DELETE_AROMAFM=1

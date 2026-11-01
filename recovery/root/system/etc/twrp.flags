@@ -1,0 +1,21 @@
+/boot emmc /dev/block/by-name/boot flags=display="Boot";backup=1;flashimg=1;slotselect
+/init_boot emmc /dev/block/by-name/init_boot flags=display="Init Boot";backup=1;flashimg=1;slotselect
+/vendor_boot emmc /dev/block/by-name/vendor_boot flags=display="Vendor Boot (recovery)";backup=1;flashimg=1;slotselect
+/dtbo emmc /dev/block/by-name/dtbo flags=display="DTBO";backup=1;flashimg=1;slotselect
+/vbmeta emmc /dev/block/by-name/vbmeta flags=display="VBMeta";backup=1;flashimg=1;slotselect
+/vbmeta_system emmc /dev/block/by-name/vbmeta_system flags=display="VBMeta System";backup=1;flashimg=1;slotselect
+/vbmeta_system_ext emmc /dev/block/by-name/vbmeta_system_ext flags=display="VBMeta System Ext";backup=1;flashimg=1;slotselect
+/vbmeta_vendor emmc /dev/block/by-name/vbmeta_vendor flags=display="VBMeta Vendor";backup=1;flashimg=1;slotselect
+/vbmeta_product emmc /dev/block/by-name/vbmeta_product flags=display="VBMeta Product";backup=1;flashimg=1;slotselect
+/vbmeta_odm emmc /dev/block/by-name/vbmeta_odm flags=display="VBMeta ODM";backup=1;flashimg=1;slotselect
+
+/prodnv ext4 /dev/block/by-name/prodnv flags=display="Prodnv (NV data)";backup=1
+/l_fixnv1 emmc /dev/block/by-name/l_fixnv1 flags=display="Modem fixnv1 (IMEI)";backup=1;slotselect
+/l_fixnv2 emmc /dev/block/by-name/l_fixnv2 flags=display="Modem fixnv2";backup=1;slotselect
+/l_runtimenv1 emmc /dev/block/by-name/l_runtimenv1 flags=display="Modem runtimenv1";backup=1
+/l_runtimenv2 emmc /dev/block/by-name/l_runtimenv2 flags=display="Modem runtimenv2";backup=1
+/miscdata emmc /dev/block/by-name/miscdata flags=display="Miscdata";backup=1
+/persist emmc /dev/block/by-name/persist flags=display="Persist";backup=1
+
+/external_sd vfat /dev/block/mmcblk1p1 /dev/block/mmcblk1 flags=display="MicroSD";storage;wipeingui;removable
+/usb_otg vfat /dev/block/sdg1 /dev/block/sdg flags=display="USB OTG";storage;wipeingui;removable
