@@ -47,6 +47,7 @@ RECOVERY_CRYPTO_BINARIES = (
     "system/bin/hwservicemanager",
 )
 LIBRARY_SEARCH_PATH = ("vendor/lib64", "vendor/lib64/hw", "system/lib64")
+SYSTEM_SEARCH_PATH = ("system/lib64",)
 KEYMINT_START_REQUIRES = ("init.svc.vendor.tee_rpc=running", "init.svc.vendor.tsupplicant=running")
 SPOOFED_PROPS = {
     "ro.build.version.security_patch": "2099-12-31",
@@ -285,6 +286,17 @@ def crypto_checks(by_name, rom_fstab_path, record):
             "unresolved": sorted(set(unresolved))[:40]})
     record("tee_undefined_symbols_resolved", not undefined,
            {"unresolved_symbols": len(undefined), "sample": undefined[:40]})
+
+    system_unresolved = []
+    for root in RECOVERY_CRYPTO_BINARIES:
+        elves, missing = load_set(by_name, root, SYSTEM_SEARCH_PATH)
+        system_unresolved.extend(missing)
+        available = set().union(*(info["defined"] for info in elves.values()))
+        for path, info in elves.items():
+            system_unresolved.extend(f"{os.path.basename(root)}: {os.path.basename(path)} needs {symbol}"
+                                     for symbol in sorted(info["undefined"] - available))
+    record("recovery_keystore_and_service_managers_link", not system_unresolved,
+           {"binaries": RECOVERY_CRYPTO_BINARIES, "unresolved": system_unresolved[:40]})
 
     bad_paths = {name: path for name, path in services.items() if resolve(by_name, path.lstrip("/")) is None}
     keymint_triggers = [t["trigger"] for t in triggers if "start vendor.keymint-unisoc-2.0" in t["commands"]]
