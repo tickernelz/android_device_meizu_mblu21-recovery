@@ -55,7 +55,7 @@ fi
 set +u
 source build/envsetup.sh
 lunch "twrp_mblu21-${release}-eng"
-set -u
 mka vendorbootimage
+set -u
 ls -l out/target/product/mblu21/
 df -h "$WORK"
