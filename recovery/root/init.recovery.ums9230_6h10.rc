@@ -49,27 +49,27 @@ on property:twrp.all.users.decrypted=true
 
 service vendor.rpmbproxy /system/bin/sprdstorageproxyd -f rpmb -d /dev/trusty-ipc-dev0 -p /mnt/vendor
     group system
-    setenv LD_LIBRARY_PATH /vendor/lib64:/vendor/lib64/hw:/system/lib64
+    setenv LD_LIBRARY_PATH /vendor/lib64/vndk33-libbase:/vendor/lib64:/vendor/lib64/hw:/system/lib64
     disabled
     oneshot
     seclabel u:r:recovery:s0
 
 service vendor.prodproxy /system/bin/sprdstorageproxyd -f prodnv -d /dev/trusty-ipc-dev0 -p /mnt/vendor/productinfo/sprd_ss
     group system
-    setenv LD_LIBRARY_PATH /vendor/lib64:/vendor/lib64/hw:/system/lib64
+    setenv LD_LIBRARY_PATH /vendor/lib64/vndk33-libbase:/vendor/lib64:/vendor/lib64/hw:/system/lib64
     disabled
     oneshot
     seclabel u:r:recovery:s0
 
 service vendor.nsproxy /system/bin/sprdstorageproxyd -f ns -d /dev/trusty-ipc-dev0 -p /data/vendor/sprd_ss
     group system
-    setenv LD_LIBRARY_PATH /vendor/lib64:/vendor/lib64/hw:/system/lib64
+    setenv LD_LIBRARY_PATH /vendor/lib64/vndk33-libbase:/vendor/lib64:/vendor/lib64/hw:/system/lib64
     disabled
     seclabel u:r:recovery:s0
 
 service vendor.teensproxy /system/bin/sprdstorageproxyd -f teens -d /dev/trusty-ipc-dev0 -p /data/vendor/sprd_tee_ss
     group system
-    setenv LD_LIBRARY_PATH /vendor/lib64:/vendor/lib64/hw:/system/lib64
+    setenv LD_LIBRARY_PATH /vendor/lib64/vndk33-libbase:/vendor/lib64:/vendor/lib64/hw:/system/lib64
     disabled
     seclabel u:r:recovery:s0
 

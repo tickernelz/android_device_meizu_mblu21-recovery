@@ -33,6 +33,7 @@ TEE_EXECUTABLES = (
 TEE_DATA = (
     "init.recovery.ums9230_6h10.rc",
     "system/bin/mblu21-data-vendor-wait.sh",
+    "vendor/lib64/vndk33-libbase/libbase.so",
     "vendor/firmware/gatekeeper.elf",
     "vendor/odm/firmware/gatekeeper.elf",
     "vendor/firmware/rpmbmac.elf",
@@ -186,7 +187,7 @@ def resolve(by_name, path, depth=0):
     return entry
 
 
-def load_set(by_name, root):
+def load_set(by_name, root, search_path=LIBRARY_SEARCH_PATH):
     elves = {}
     missing = []
     queue = [root]
@@ -197,7 +198,7 @@ def load_set(by_name, root):
         info = parse_elf(resolve(by_name, path)["content"])
         elves[path] = info
         for lib in info["needed"]:
-            for directory in LIBRARY_SEARCH_PATH:
+            for directory in search_path:
                 candidate = f"{directory}/{lib}"
                 if resolve(by_name, candidate) is not None:
                     queue.append(candidate)
@@ -236,20 +237,26 @@ def parse_props(by_name):
 
 def rc_services_and_triggers(text):
     services = {}
+    library_paths = {}
     triggers = []
     current = None
+    service = None
     for raw in text.splitlines():
         line = raw.strip()
         if line.startswith("service "):
             parts = line.split()
             services[parts[1]] = parts[2]
+            service = parts[2].lstrip("/")
             current = None
+        elif service and line.startswith("setenv LD_LIBRARY_PATH "):
+            library_paths[service] = tuple(part.lstrip("/") for part in line.split()[2].split(":"))
         elif line.startswith("on "):
             current = {"trigger": line[3:], "commands": []}
             triggers.append(current)
+            service = None
         elif current is not None and line:
             current["commands"].append(line)
-    return services, triggers
+    return services, triggers, library_paths
 
 
 def crypto_checks(by_name, rom_fstab_path, record):
@@ -259,11 +266,14 @@ def crypto_checks(by_name, rom_fstab_path, record):
     if absent:
         return
 
+    rc_text = resolve(by_name, "init.recovery.ums9230_6h10.rc")["content"].decode()
+    services, triggers, library_paths = rc_services_and_triggers(rc_text)
+
     unresolved = []
     undefined = []
     loaded = set()
     for root in TEE_EXECUTABLES:
-        elves, missing = load_set(by_name, root)
+        elves, missing = load_set(by_name, root, library_paths.get(root, LIBRARY_SEARCH_PATH))
         unresolved.extend(missing)
         loaded.update(elves)
         available = set().union(*(info["defined"] for info in elves.values()))
@@ -271,12 +281,11 @@ def crypto_checks(by_name, rom_fstab_path, record):
             for symbol in sorted(info["undefined"] - available):
                 undefined.append(f"{os.path.basename(root)}: {os.path.basename(path)} needs {symbol}")
     record("tee_needed_libraries_resolved", not unresolved,
-           {"objects_loaded": len(loaded), "search_path": LIBRARY_SEARCH_PATH, "unresolved": sorted(set(unresolved))[:40]})
+           {"objects_loaded": len(loaded), "service_library_paths": {os.path.basename(k): ":".join(v) for k, v in sorted(library_paths.items())},
+            "unresolved": sorted(set(unresolved))[:40]})
     record("tee_undefined_symbols_resolved", not undefined,
            {"unresolved_symbols": len(undefined), "sample": undefined[:40]})
 
-    rc_text = resolve(by_name, "init.recovery.ums9230_6h10.rc")["content"].decode()
-    services, triggers = rc_services_and_triggers(rc_text)
     bad_paths = {name: path for name, path in services.items() if resolve(by_name, path.lstrip("/")) is None}
     keymint_triggers = [t["trigger"] for t in triggers if "start vendor.keymint-unisoc-2.0" in t["commands"]]
     ordered = bool(keymint_triggers) and all(all(req in trig for req in KEYMINT_START_REQUIRES) for trig in keymint_triggers)

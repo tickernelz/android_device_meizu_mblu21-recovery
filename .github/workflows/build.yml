@@ -10,6 +10,10 @@ on:
 permissions:
   contents: write
 
+defaults:
+  run:
+    shell: bash
+
 concurrency:
   group: build-${{ github.sha }}
   cancel-in-progress: false
