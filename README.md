@@ -39,7 +39,7 @@ Because normal boot uses the same image, anything that differs from stock outsid
 | module lists | `modules.load` 72 and `modules.load.recovery` 139 entries |
 | recovery | `system/bin/recovery` and `twres/` present (OrangeFox also `FFiles/`) |
 | TEE stack | the 6 Trusty/keymint/gatekeeper programs, their rc file, VINTF fragments, the gatekeeper and rpmbmac trusted apps, and `keystore2`, `servicemanager`, `hwservicemanager` are in the ramdisk |
-| TEE libraries | every `DT_NEEDED` of those programs resolves inside the ramdisk through `/vendor/lib64`, `/vendor/lib64/hw`, `/system/lib64`, and every non-weak undefined symbol is defined by the loaded set |
+| TEE libraries | every `DT_NEEDED` of those programs resolves inside the ramdisk through the `LD_LIBRARY_PATH` its rc service sets, and every non-weak undefined symbol is defined by the loaded set |
 | TEE start order | keymint and gatekeeper start only after `tee_rpc` and `tsupplicant` are running |
 | fstab | `/data` and `/metadata` in the recovery fstab equal the ROM fstab (`prebuilt/fstab.rom.ums9230_6h10`): file system, mount options, `fileencryption=`, `keydirectory=` |
 | version props | `ro.build.version.release` 99.87.36, `ro.build.version.security_patch` and `ro.vendor.build.security_patch` 2099-12-31 |
@@ -57,7 +57,8 @@ LineageOS 24 and the stock ROM encrypt `/data` with FBE v2 (`aes-256-xts:aes-256
 | KeyMint 2.0 (`android.hardware.security.keymint@2.0-unisoc.service.trusty`) | `vendor/bin/hw` | `/system/bin` |
 | Gatekeeper 1.0 (`android.hardware.gatekeeper@1.0-service.trusty`) | `vendor/bin/hw` | `/system/bin` |
 | Gatekeeper and RPMB MAC trusted apps | `odm/firmware/gatekeeper.elf`, `vendor/firmware/rpmbmac.elf` | `/vendor/firmware`, `/vendor/odm/firmware` |
-| 12 vendor libraries, 8 VNDK-33 libraries the stack links against | `vendor/lib64`, `com.android.vndk.v33` | `/vendor/lib64` |
+| 12 vendor libraries, 8 VNDK-33 libraries the stack links against that the recovery does not ship | `vendor/lib64`, `com.android.vndk.v33` | `/vendor/lib64` |
+| VNDK-33 `libbase` for the storage proxies only (`sprdstorageproxyd` needs `android::base::Trim(std::string const&)`, which the Android 16 `libbase` no longer exports) | `com.android.vndk.v33` | `/vendor/lib64/vndk33-libbase`, first in those services' `LD_LIBRARY_PATH` |
 | VINTF fragments for KeyMint, Gatekeeper, Trusty | `vendor/etc/vintf/manifest` | `/vendor/etc/vintf/manifest` |
 
 `init.recovery.ums9230_6h10.rc` starts them as the ROM does, in this order: when TWRP marks `/data` encrypted it mounts `prodnv` on `/mnt/vendor`, starts the RPMB and prodnv storage proxies, `tee_rpc`, `tsupplicant` and the Trusty service; KeyMint and Gatekeeper start once `tee_rpc` and `tsupplicant` are running; the `/data/vendor` storage proxies start only after the device-encrypted part of `/data` is readable, and stop once all users are decrypted so `/data` can be unmounted.
