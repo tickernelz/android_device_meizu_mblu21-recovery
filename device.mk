@@ -7,14 +7,7 @@ PRODUCT_USE_DYNAMIC_PARTITIONS := true
 PRODUCT_SHIPPING_API_LEVEL := 33
 
 PRODUCT_PACKAGES += \
-    mblu21_stock_vendor_ramdisk
-
-PRODUCT_PACKAGES += \
-    android.hardware.boot@1.2-impl \
-    android.hardware.boot@1.2-impl.recovery \
-    android.hardware.boot@1.2-service
-
-PRODUCT_PACKAGES += \
+    mblu21_stock_vendor_ramdisk \
     fastbootd
 
 PRODUCT_PROPERTY_OVERRIDES += \

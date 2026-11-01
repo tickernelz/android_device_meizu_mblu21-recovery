@@ -1,13 +1,13 @@
+#!/usr/bin/env bash
 #
 # SPDX-FileCopyrightText: 2026 Zhafron Adani Kautsar
 # SPDX-License-Identifier: Apache-2.0
 #
 
+export FOX_BUILD_DEVICE=mblu21
 export FOX_VENDOR_BOOT_RECOVERY=1
 export FOX_AB_DEVICE=1
 export FOX_VIRTUAL_AB_DEVICE=1
-export FOX_RECOVERY_SYSTEM_PARTITION=/dev/block/mapper/system
-export FOX_RECOVERY_VENDOR_PARTITION=/dev/block/mapper/vendor
 export FOX_BUILD_TYPE=Unofficial
 export FOX_VARIANT=UNTESTED
 export OF_MAINTAINER=tickernelz

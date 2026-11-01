@@ -92,16 +92,12 @@
       "uid": 0
     },
     "first_stage_ramdisk/system/bin/defrag.f2fs": {
-      "gid": 0,
       "link": "fsck.f2fs",
-      "mode": "0o120644",
-      "uid": 0
+      "type": "symlink"
     },
     "first_stage_ramdisk/system/bin/dump.f2fs": {
-      "gid": 0,
       "link": "fsck.f2fs",
-      "mode": "0o120644",
-      "uid": 0
+      "type": "symlink"
     },
     "first_stage_ramdisk/system/bin/e2fsck": {
       "gid": 0,
@@ -125,22 +121,16 @@
       "uid": 0
     },
     "first_stage_ramdisk/system/bin/linker_asan64": {
-      "gid": 0,
       "link": "linker64",
-      "mode": "0o120644",
-      "uid": 0
+      "type": "symlink"
     },
     "first_stage_ramdisk/system/bin/linker_hwasan64": {
-      "gid": 0,
       "link": "linker64",
-      "mode": "0o120644",
-      "uid": 0
+      "type": "symlink"
     },
     "first_stage_ramdisk/system/bin/resize.f2fs": {
-      "gid": 0,
       "link": "fsck.f2fs",
-      "mode": "0o120644",
-      "uid": 0
+      "type": "symlink"
     },
     "first_stage_ramdisk/system/bin/snapuserd": {
       "gid": 0,

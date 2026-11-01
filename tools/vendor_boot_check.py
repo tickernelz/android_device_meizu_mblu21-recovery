@@ -9,6 +9,8 @@ import struct
 import subprocess
 import sys
 
+from elfinfo import parse as parse_elf
+
 VENDOR_PREFIXES = ("first_stage_ramdisk", "lib/modules")
 HEADER_FORMAT = "<8sIIIII2048sI16sIIQIIII"
 HEADER_SIZE = struct.calcsize(HEADER_FORMAT)
@@ -19,6 +21,37 @@ RECOVERY_MARKERS = {
     "orangefox": ("system/bin/recovery", "twres", "FFiles"),
 }
 
+TEE_EXECUTABLES = (
+    "system/bin/android.hardware.security.keymint@2.0-unisoc.service.trusty",
+    "system/bin/android.hardware.gatekeeper@1.0-service.trusty",
+    "system/bin/vendor.sprd.hardware.trusty-service",
+    "system/bin/tee_rpc",
+    "system/bin/tsupplicant",
+    "system/bin/sprdstorageproxyd",
+    "vendor/lib64/hw/vendor.sprd.hardware.trusty-impl.so",
+)
+TEE_DATA = (
+    "init.recovery.ums9230_6h10.rc",
+    "system/bin/mblu21-data-vendor-wait.sh",
+    "vendor/firmware/gatekeeper.elf",
+    "vendor/odm/firmware/gatekeeper.elf",
+    "vendor/firmware/rpmbmac.elf",
+    "vendor/etc/vintf/manifest/android.hardware.security.keymint@2.0-unisoc.service.trusty.xml",
+    "vendor/etc/vintf/manifest/android.hardware.gatekeeper@1.0-service.trusty.xml",
+    "vendor/etc/vintf/manifest/trusty-default.xml",
+)
+RECOVERY_CRYPTO_BINARIES = (
+    "system/bin/keystore2",
+    "system/bin/servicemanager",
+    "system/bin/hwservicemanager",
+)
+LIBRARY_SEARCH_PATH = ("vendor/lib64", "vendor/lib64/hw", "system/lib64")
+KEYMINT_START_REQUIRES = ("init.svc.vendor.tee_rpc=running", "init.svc.vendor.tsupplicant=running")
+SPOOFED_PROPS = {
+    "ro.build.version.security_patch": "2099-12-31",
+    "ro.vendor.build.security_patch": "2099-12-31",
+    "ro.build.version.release": "99.87.36",
+}
 
 def sha256(data):
     return hashlib.sha256(data).hexdigest()
@@ -115,10 +148,10 @@ def parse_cpio(data):
 
 def describe_entry(entry):
     kind = entry["mode"] & 0o170000
-    record = {"mode": oct(entry["mode"]), "uid": entry["uid"], "gid": entry["gid"]}
     if kind == 0o120000:
-        record["link"] = entry["content"].decode()
-    elif kind == 0o100000:
+        return {"type": "symlink", "link": entry["content"].decode()}
+    record = {"mode": oct(entry["mode"]), "uid": entry["uid"], "gid": entry["gid"]}
+    if kind == 0o100000:
         record["sha256"] = sha256(entry["content"])
         record["size"] = len(entry["content"])
     return record
@@ -142,6 +175,136 @@ def module_list(entries, name):
     return []
 
 
+def resolve(by_name, path, depth=0):
+    entry = by_name.get(path)
+    if entry is None or depth > 8:
+        return None
+    if entry["mode"] & 0o170000 == 0o120000:
+        target = entry["content"].decode()
+        target = target.lstrip("/") if target.startswith("/") else os.path.normpath(os.path.join(os.path.dirname(path), target))
+        return resolve(by_name, target, depth + 1)
+    return entry
+
+
+def load_set(by_name, root):
+    elves = {}
+    missing = []
+    queue = [root]
+    while queue:
+        path = queue.pop()
+        if path in elves:
+            continue
+        info = parse_elf(resolve(by_name, path)["content"])
+        elves[path] = info
+        for lib in info["needed"]:
+            for directory in LIBRARY_SEARCH_PATH:
+                candidate = f"{directory}/{lib}"
+                if resolve(by_name, candidate) is not None:
+                    queue.append(candidate)
+                    break
+            else:
+                missing.append(f"{os.path.basename(path)} -> {lib}")
+    return elves, missing
+
+
+def parse_fstab(text):
+    entries = {}
+    for line in text.splitlines():
+        fields = line.split()
+        if len(fields) < 5 or fields[0].startswith("#"):
+            continue
+        entries.setdefault(fields[1], []).append({
+            "fs": fields[2], "options": sorted(fields[3].split(",")), "flags": sorted(fields[4].split(","))})
+    return entries
+
+
+def parse_props(by_name):
+    props = {}
+    for name in sorted(by_name):
+        if name in ("prop.default", "default.prop") or name.endswith("/build.prop"):
+            if is_vendor_path(name):
+                continue
+            entry = resolve(by_name, name)
+            if entry is None:
+                continue
+            for line in entry["content"].decode(errors="replace").splitlines():
+                if "=" in line and not line.startswith("#"):
+                    key, value = line.split("=", 1)
+                    props.setdefault(key.strip(), value.strip())
+    return props
+
+
+def rc_services_and_triggers(text):
+    services = {}
+    triggers = []
+    current = None
+    for raw in text.splitlines():
+        line = raw.strip()
+        if line.startswith("service "):
+            parts = line.split()
+            services[parts[1]] = parts[2]
+            current = None
+        elif line.startswith("on "):
+            current = {"trigger": line[3:], "commands": []}
+            triggers.append(current)
+        elif current is not None and line:
+            current["commands"].append(line)
+    return services, triggers
+
+
+def crypto_checks(by_name, rom_fstab_path, record):
+    required = TEE_EXECUTABLES + TEE_DATA + RECOVERY_CRYPTO_BINARIES
+    absent = [path for path in required if resolve(by_name, path) is None]
+    record("tee_stack_files_present", not absent, {"required": len(required), "missing": absent})
+    if absent:
+        return
+
+    unresolved = []
+    undefined = []
+    loaded = set()
+    for root in TEE_EXECUTABLES:
+        elves, missing = load_set(by_name, root)
+        unresolved.extend(missing)
+        loaded.update(elves)
+        available = set().union(*(info["defined"] for info in elves.values()))
+        for path, info in elves.items():
+            for symbol in sorted(info["undefined"] - available):
+                undefined.append(f"{os.path.basename(root)}: {os.path.basename(path)} needs {symbol}")
+    record("tee_needed_libraries_resolved", not unresolved,
+           {"objects_loaded": len(loaded), "search_path": LIBRARY_SEARCH_PATH, "unresolved": sorted(set(unresolved))[:40]})
+    record("tee_undefined_symbols_resolved", not undefined,
+           {"unresolved_symbols": len(undefined), "sample": undefined[:40]})
+
+    rc_text = resolve(by_name, "init.recovery.ums9230_6h10.rc")["content"].decode()
+    services, triggers = rc_services_and_triggers(rc_text)
+    bad_paths = {name: path for name, path in services.items() if resolve(by_name, path.lstrip("/")) is None}
+    keymint_triggers = [t["trigger"] for t in triggers if "start vendor.keymint-unisoc-2.0" in t["commands"]]
+    ordered = bool(keymint_triggers) and all(all(req in trig for req in KEYMINT_START_REQUIRES) for trig in keymint_triggers)
+    record("tee_services_defined_and_ordered", not bad_paths and ordered,
+           {"services": sorted(services), "bad_paths": bad_paths, "keymint_start_triggers": keymint_triggers})
+
+    rom = parse_fstab(open(rom_fstab_path).read())
+    fstab_entry = resolve(by_name, "system/etc/recovery.fstab")
+    recovery = parse_fstab(fstab_entry["content"].decode()) if fstab_entry else {}
+    mismatches = {}
+    for mount in ("/data", "/metadata"):
+        built = recovery.get(mount, [])
+        if not built:
+            mismatches[mount] = "missing in recovery.fstab"
+            continue
+        for entry in built:
+            if entry not in rom.get(mount, []):
+                mismatches[mount] = {"recovery": entry, "rom": rom.get(mount, [])}
+    data = recovery.get("/data", [{}])[0]
+    record("recovery_fstab_encryption_matches_rom", not mismatches,
+           {"fileencryption": [f for f in data.get("flags", []) if f.startswith(("fileencryption=", "keydirectory=", "metadata_encryption="))],
+            "mismatches": mismatches})
+
+    props = parse_props(by_name)
+    seen = {key: props.get(key) for key in SPOOFED_PROPS}
+    record("keymint_version_props_spoofed", seen == SPOOFED_PROPS, seen)
+
+
 def emit_reference(image_path, out_path):
     image = read_image(image_path)
     _, entries = ramdisk_view(image)
@@ -157,7 +320,7 @@ def emit_reference(image_path, out_path):
     print(f"reference: {len(vendor)} vendor entries written to {out_path}")
 
 
-def check(image_path, reference_path, flavor, report_path):
+def check(image_path, reference_path, flavor, report_path, rom_fstab_path=None):
     with open(reference_path) as handle:
         reference = json.load(handle)
     image = read_image(image_path)
@@ -209,6 +372,9 @@ def check(image_path, reference_path, flavor, report_path):
     record(f"{flavor}_recovery_ramdisk_present", not absent,
            {"missing_markers": absent, "recovery_entries": recovery_entries})
 
+    if rom_fstab_path:
+        crypto_checks(by_name, rom_fstab_path, record)
+
     summary = {
         "image": os.path.basename(image_path),
         "sha256": sha256(open(image_path, "rb").read()),
@@ -236,11 +402,12 @@ def main():
     parser.add_argument("--emit-reference", action="store_true")
     parser.add_argument("--flavor", choices=sorted(RECOVERY_MARKERS), default="twrp")
     parser.add_argument("--report")
+    parser.add_argument("--rom-fstab", help="ROM fstab whose /data and /metadata encryption options the recovery must match")
     args = parser.parse_args()
     if args.emit_reference:
         emit_reference(args.image, args.reference)
         return 0
-    return check(args.image, args.reference, args.flavor, args.report)
+    return check(args.image, args.reference, args.flavor, args.report, args.rom_fstab)
 
 
 if __name__ == "__main__":

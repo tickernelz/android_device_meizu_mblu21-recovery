@@ -26,7 +26,7 @@ jobs:
           - flavor: twrp
             manifest: twrp-14.1
           - flavor: orangefox
-            manifest: fox_14.1
+            manifest: fox_16.0
     env:
       FLAVOR: ${{ matrix.flavor }}
       MANIFEST_BRANCH: ${{ matrix.manifest }}
@@ -81,6 +81,7 @@ jobs:
           python3 tree/tools/vendor_boot_check.py "$img" \
             --reference tree/prebuilt/stock_vendor_boot.json \
             --flavor "$FLAVOR" \
+            --rom-fstab tree/prebuilt/fstab.rom.ums9230_6h10 \
             --report dist/validation.json | tee dist/validation.txt
 
       - name: Package

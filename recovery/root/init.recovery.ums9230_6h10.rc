@@ -1,6 +1,11 @@
 on early-init
     setprop sys.usb.configfs 1
 
+on fs
+    wait /dev/block/by-name/prodnv
+    mkdir /mnt/vendor 0771 system system
+    mount ext4 /dev/block/by-name/prodnv /mnt/vendor nosuid nodev noatime
+
 on fs && property:sys.usb.configfs=1
     mkdir /config/usb_gadget/g1/functions/ffs.mtp
     mkdir /dev/usb-ffs/mtp 0770 mtp mtp
@@ -20,3 +25,92 @@ on property:sys.usb.config=mtp,adb && property:sys.usb.ffs.ready=1 && property:s
     symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f2
     write /config/usb_gadget/g1/UDC ${sys.usb.controller}
     setprop sys.usb.state ${sys.usb.config}
+
+on property:ro.crypto.state=encrypted
+    wait /dev/trusty-ipc-dev0
+    start vendor.rpmbproxy
+    start vendor.prodproxy
+    start vendor.tee_rpc
+    start vendor.tsupplicant
+    start vendor.sprd.hardware.trusty-service
+    start mblu21.data-vendor-wait
+
+on property:ro.crypto.state=encrypted && property:init.svc.vendor.tee_rpc=running && property:init.svc.vendor.tsupplicant=running
+    start vendor.keymint-unisoc-2.0
+    start vendor.gatekeeper-1-0
+
+on property:mblu21.data_vendor.ready=1
+    start vendor.nsproxy
+    start vendor.teensproxy
+
+on property:twrp.all.users.decrypted=true
+    stop vendor.nsproxy
+    stop vendor.teensproxy
+
+service vendor.rpmbproxy /system/bin/sprdstorageproxyd -f rpmb -d /dev/trusty-ipc-dev0 -p /mnt/vendor
+    group system
+    setenv LD_LIBRARY_PATH /vendor/lib64:/vendor/lib64/hw:/system/lib64
+    disabled
+    oneshot
+    seclabel u:r:recovery:s0
+
+service vendor.prodproxy /system/bin/sprdstorageproxyd -f prodnv -d /dev/trusty-ipc-dev0 -p /mnt/vendor/productinfo/sprd_ss
+    group system
+    setenv LD_LIBRARY_PATH /vendor/lib64:/vendor/lib64/hw:/system/lib64
+    disabled
+    oneshot
+    seclabel u:r:recovery:s0
+
+service vendor.nsproxy /system/bin/sprdstorageproxyd -f ns -d /dev/trusty-ipc-dev0 -p /data/vendor/sprd_ss
+    group system
+    setenv LD_LIBRARY_PATH /vendor/lib64:/vendor/lib64/hw:/system/lib64
+    disabled
+    seclabel u:r:recovery:s0
+
+service vendor.teensproxy /system/bin/sprdstorageproxyd -f teens -d /dev/trusty-ipc-dev0 -p /data/vendor/sprd_tee_ss
+    group system
+    setenv LD_LIBRARY_PATH /vendor/lib64:/vendor/lib64/hw:/system/lib64
+    disabled
+    seclabel u:r:recovery:s0
+
+service vendor.tee_rpc /system/bin/tee_rpc
+    user system
+    group system
+    setenv LD_LIBRARY_PATH /vendor/lib64:/vendor/lib64/hw:/system/lib64
+    disabled
+    seclabel u:r:recovery:s0
+
+service vendor.tsupplicant /system/bin/tsupplicant firmware
+    user system
+    group system
+    setenv LD_LIBRARY_PATH /vendor/lib64:/vendor/lib64/hw:/system/lib64
+    disabled
+    seclabel u:r:recovery:s0
+
+service vendor.sprd.hardware.trusty-service /system/bin/vendor.sprd.hardware.trusty-service
+    user system
+    group system
+    setenv LD_LIBRARY_PATH /vendor/lib64:/vendor/lib64/hw:/system/lib64
+    disabled
+    seclabel u:r:recovery:s0
+
+service vendor.keymint-unisoc-2.0 /system/bin/android.hardware.security.keymint@2.0-unisoc.service.trusty
+    user system
+    group system drmrpc
+    setenv LD_LIBRARY_PATH /vendor/lib64:/vendor/lib64/hw:/system/lib64
+    disabled
+    seclabel u:r:recovery:s0
+
+service vendor.gatekeeper-1-0 /system/bin/android.hardware.gatekeeper@1.0-service.trusty
+    user system
+    group system
+    setenv LD_LIBRARY_PATH /vendor/lib64:/vendor/lib64/hw:/system/lib64
+    disabled
+    seclabel u:r:recovery:s0
+
+service mblu21.data-vendor-wait /system/bin/mblu21-data-vendor-wait.sh
+    user root
+    group root
+    disabled
+    oneshot
+    seclabel u:r:recovery:s0
