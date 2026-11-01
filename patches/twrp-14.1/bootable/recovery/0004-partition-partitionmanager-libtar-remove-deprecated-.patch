@@ -1,0 +1,375 @@
+From 551fa28de325ba8e80f009099e1a0a1a8443731d Mon Sep 17 00:00:00 2001
+From: Jamie Leigh Falconer <mrfluffyoven@gmail.com>
+Date: Sun, 26 Jul 2026 06:36:20 +0000
+Subject: [PATCH 4/4] partition, partitionmanager, libtar: remove deprecated
+ FDE and fix fscrypt policy API drift
+
+1. Removed deprecated FDE codepaths (partition.cpp, partitionmanager.cpp)
+
+   partition.cpp and partitionmanager.cpp called legacy Full Disk
+   Encryption functions (cryptfs_check_footer, cryptfs_get_password_type,
+   cryptfs_check_passwd, delete_crypto_blk_dev, set_partition_data) that
+   no longer exist in AOSP (see system/vold commit 0803ba0, "Remove
+   most of FDE support"). FDE was deprecated as of Android 10; this
+   device is FBE-only and these codepaths were already runtime-dead
+   (guarded behind Decrypt_Data->Is_FBE / TW_IS_FBE checks that always
+   evaluate true). Removed the footer-based FDE detection branch and
+   crypto block device cleanup in partition.cpp, and the "FBE failed,
+   try FDE" fallback plus the fork()/cryptfs_check_passwd() password
+   verification path (and now-unreachable success-path code) in
+   partitionmanager.cpp.
+
+2. Fixed libtar fscrypt policy API drift (libtar.h, append.c, block.c,
+   extract.c, new fscrypt_policy_compat.h)
+
+   Removing the FDE codepaths above surfaced a second, unrelated set of
+   build failures one layer down: libtar's block.c/append.c/extract.c
+   called helper functions (get_policy, get_policy_descriptor,
+   get_policy_size, fscrypt_policy_size, get_policy_content) that
+   historically wrapped the raw kernel fscrypt_policy struct. That
+   wrapper no longer exists upstream, and the call sites were
+   internally inconsistent with each other (differing arities/names
+   across files) and some hardcoded struct fscrypt_policy_v1 even
+   though this device's build defines USE_FSCRYPT_POLICY_V2.
+
+   Added fscrypt_policy_compat.h, a version-generic compatibility shim
+   providing all five functions via a single typedef that resolves to
+   whichever policy version this build selects. Updated libtar.h's
+   tar_header.fep field and the malloc() calls in append.c/block.c to
+   use the generic typedef instead of hardcoding v1.
+
+   Also fixed a genuine logic bug in extract.c: lookup_ref_tar() was
+   being passed the whole fep struct instead of descriptor (the
+   policy-type identifier string that append.c stores in that field
+   during backup), which both failed to compile and would have been
+   semantically wrong at runtime.
+
+Test: full recovery build for m55xq (SM7450) compiles clean through
+libtar and partition/partitionmanager; FBE decrypt (default and user
+password) verified functional in recovery
+
+Change-Id: Ide28683f2d3d5534ed8e2dae0c4fcdfedfe32682
+Signed-off-by: SavedByLight  mrfluffyoven@gmail.com
+---
+ Android.mk                     |   1 +
+ libtar/Android.mk              |   4 +-
+ libtar/append.c                |  27 ++++-----
+ libtar/block.c                 |   8 +--
+ libtar/extract.c               |   2 +-
+ libtar/fscrypt_policy_compat.h | 108 +++++++++++++++++++++++++++++++++
+ libtar/libtar.h                |   3 +-
+ partition.cpp                  |  43 ++++---------
+ 8 files changed, 143 insertions(+), 53 deletions(-)
+ create mode 100644 libtar/fscrypt_policy_compat.h
+
+diff --git a/Android.mk b/Android.mk
+index 2f007dc..1fd31c4 100755
+--- a/Android.mk
++++ b/Android.mk
+@@ -80,6 +80,7 @@ LOCAL_SHARED_LIBRARIES += android.hardware.boot@1.0 \
+                           libbinder \
+                           libbinder_ndk \
+                           libboot_control_client \
++                          libsysutils \
+                           libfs_mgr \
+                           libhardware \
+                           libhidlbase \
+diff --git a/libtar/Android.mk b/libtar/Android.mk
+index 008125a..307b114 100755
+--- a/libtar/Android.mk
++++ b/libtar/Android.mk
+@@ -14,9 +14,11 @@ LOCAL_C_INCLUDES += external/libselinux/include
+ LOCAL_SHARED_LIBRARIES += libselinux
+ 
+ ifeq ($(TW_INCLUDE_CRYPTO_FBE), true)
+-    LOCAL_STATIC_LIBRARIES += libvold libscrypt_static
++    LOCAL_STATIC_LIBRARIES += libvold libscrypt_static libasync_safe
+     LOCAL_SHARED_LIBRARIES +=  \
+         android.hardware.boot@1.0 \
++        libsysutils \
++        libboot_control_client \
+         android.hardware.confirmationui@1.0 \
+         android.hardware.gatekeeper@1.0 \
+         android.hardware.keymaster@3.0 \
+diff --git a/libtar/append.c b/libtar/append.c
+index 225ae1a..8c7dea3 100755
+--- a/libtar/append.c
++++ b/libtar/append.c
+@@ -136,22 +136,21 @@ tar_append_file(TAR *t, const char *realname, const char *savename)
+ 	}
+ 
+ #ifdef USE_FSCRYPT
+-	if (TH_ISDIR(t) && t->options & TAR_STORE_FSCRYPT_POL)
++if (TH_ISDIR(t) && t->options & TAR_STORE_FSCRYPT_POL)
++{
++	if (t->th_buf.fep != NULL)
+ 	{
+-		if (t->th_buf.fep != NULL)
+-		{
+-			free(t->th_buf.fep);
+-			t->th_buf.fep = NULL;
+-		}
+-		t->th_buf.fep = (fscrypt_policy *)malloc(sizeof(fscrypt_policy));
+-		if (!t->th_buf.fep) {
+-			LOG("malloc fs_encryption_policy\n");
+-			return -1;
+-		}
+-
+-		if (fscrypt_policy_get_struct(realname, t->th_buf.fep)) {
++		free(t->th_buf.fep);
++		t->th_buf.fep = NULL;
++	}
++	t->th_buf.fep = (libtar_fscrypt_policy_t *)malloc(sizeof(libtar_fscrypt_policy_t));
++	if (!t->th_buf.fep) {
++		LOG("malloc fs_encryption_policy\n");
++		return -1;
++	}
++	if (fscrypt_policy_get_struct(realname, t->th_buf.fep)) {
+ 			uint8_t size, hex_size, *descriptor;
+-			size = get_policy_size(t->th_buf.fep, false);
++  			size = get_policy_size(t->th_buf.fep, false);
+ 			hex_size = get_policy_size(t->th_buf.fep, true);
+ 			descriptor = get_policy_descriptor(t->th_buf.fep);
+ 			char user_ce[4], user_de[4], system_de[4];
+diff --git a/libtar/block.c b/libtar/block.c
+index aaedc8e..e08d3eb 100755
+--- a/libtar/block.c
++++ b/libtar/block.c
+@@ -354,7 +354,7 @@ th_read(TAR *t)
+ #ifdef USE_FSCRYPT
+ 			start = strstr(buf, FSCRYPT_TAG);
+ 			if (start && start+FSCRYPT_TAG_LEN < buf+len) {
+-				t->th_buf.fep = (fscrypt_policy*)malloc(sizeof(fscrypt_policy));
++                        t->th_buf.fep = (libtar_fscrypt_policy_t *)malloc(sizeof(libtar_fscrypt_policy_t));
+ 				if (!t->th_buf.fep) {
+ 					LOG("malloc failed for fscrypt policy\n");
+ 					return -1;
+@@ -362,7 +362,7 @@ th_read(TAR *t)
+ 				start += FSCRYPT_TAG_LEN;
+ 				if (*start == '0') {
+ 					start++;
+-					memcpy(get_policy(t->th_buf.fep), start, fscrypt_policy_size(t->th_buf.fep));
++					memcpy(get_policy_descriptor(t->th_buf.fep), start, get_policy_size(t->th_buf.fep, false));
+ #ifdef DEBUG
+ 					uint8_t version;
+ 					char content[50];
+@@ -581,7 +581,7 @@ th_write(TAR *t)
+ 		/* setup size - EXT header has format "*size of this whole tag as ascii numbers* *space* *version code* *content* *newline* */
+ 		//                                                       size   newline
+ 		uint8_t size, *descriptor;
+-		size = fscrypt_policy_size(t->th_buf.fep);
++		size = get_policy_size(t->th_buf.fep, false);
+ 		descriptor = get_policy_descriptor(t->th_buf.fep);
+ #ifdef DEBUG
+ 		LOG("th_write(): using fscrypt_policy %s\n", descriptor);
+@@ -601,7 +601,7 @@ th_write(TAR *t)
+ 			total_sz += sz;
+ 
+ 		snprintf(ptr, T_BLOCKSIZE, "%d "FSCRYPT_TAG"0", (int)sz);
+-		memcpy(ptr + sz - size - 1, get_policy(t->th_buf.fep), size);
++		memcpy(ptr + sz - size - 1, get_policy_descriptor(t->th_buf.fep), size);
+ 		char *nlptr = ptr + sz - 1;
+ 		*nlptr = '\n';
+ 		ptr += sz;
+diff --git a/libtar/extract.c b/libtar/extract.c
+index be989b0..0dfa319 100755
+--- a/libtar/extract.c
++++ b/libtar/extract.c
+@@ -570,7 +570,7 @@ tar_extract_dir(TAR *t, const char *realname)
+ 		uint8_t binary_policy[size];
+ 		memset(&binary_policy, 0, size);
+ 
+-		if (!lookup_ref_tar(t->th_buf.fep, &binary_policy[0])) {
++		if (!lookup_ref_tar(descriptor, &binary_policy[0])) {
+ 			LOG("error looking up fscrypt policy for '%s' - %s\n", realname, descriptor);
+ 			policy_lookup_error = true;
+ 		}
+diff --git a/libtar/fscrypt_policy_compat.h b/libtar/fscrypt_policy_compat.h
+new file mode 100644
+index 0000000..8839e57
+--- /dev/null
++++ b/libtar/fscrypt_policy_compat.h
+@@ -0,0 +1,108 @@
++/*
++ * fscrypt_policy_compat.h
++ *
++ * Compatibility shim for libtar's fscrypt policy backup/restore support.
++ *
++ * libtar's block.c, append.c, extract.c, and output.c call a set of
++ * helper functions (get_policy, get_policy_descriptor, get_policy_size,
++ * fscrypt_policy_size, get_policy_content) that historically wrapped the
++ * raw kernel fscrypt policy struct so TWRP could preserve a directory's
++ * FBE policy across tar backup/restore. That wrapper header no longer
++ * exists upstream (AOSP's kernel uapi header only exposes the raw
++ * struct fscrypt_policy_v1/v2 with no convenience helpers), and the
++ * call sites were never fully reconciled with each other (block.c used
++ * a 1-arg fscrypt_policy_size(), while append.c/extract.c used a 2-arg
++ * get_policy_size() with a hex-vs-raw flag; some also hardcoded
++ * fscrypt_policy_v1 even though this device's build actually defines
++ * USE_FSCRYPT_POLICY_V2).
++ *
++ * This header restores all five functions with consistent, well-defined
++ * semantics, generically supporting whichever policy version this
++ * build's USE_FSCRYPT_POLICY_V1 flag selects - matching the same
++ * convention system/vold/fscrypt_policy.h already uses:
++ *
++ *   struct fscrypt_policy_v1 { version, contents_encryption_mode,
++ *     filenames_encryption_mode, flags, master_key_descriptor[8] }
++ *   struct fscrypt_policy_v2 { version, contents_encryption_mode,
++ *     filenames_encryption_mode, flags, __reserved[4],
++ *     master_key_identifier[16] }
++ */
++
++#ifndef _LIBTAR_FSCRYPT_POLICY_COMPAT_H_
++#define _LIBTAR_FSCRYPT_POLICY_COMPAT_H_
++
++#include <linux/fscrypt.h>
++#include <stdint.h>
++#include <string.h>
++#include <stddef.h>
++#include <stdbool.h>
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++/*
++ * libtar is built against whichever fscrypt policy version this device's
++ * build defines (USE_FSCRYPT_POLICY_V1 selects v1's 8-byte
++ * master_key_descriptor; otherwise v2's 16-byte master_key_identifier is
++ * used, matching system/vold/fscrypt_policy.h's own convention). Define a
++ * single generic type/field pair so libtar's code doesn't need to
++ * hardcode either version.
++ */
++#ifdef USE_FSCRYPT_POLICY_V1
++typedef struct fscrypt_policy_v1 libtar_fscrypt_policy_t;
++#define LIBTAR_FSCRYPT_KEY_FIELD master_key_descriptor
++#else
++typedef struct fscrypt_policy_v2 libtar_fscrypt_policy_t;
++#define LIBTAR_FSCRYPT_KEY_FIELD master_key_identifier
++#endif
++
++/* Returns a pointer to the raw bytes of the whole policy struct. */
++static inline uint8_t* get_policy(libtar_fscrypt_policy_t *fep) {
++	return (uint8_t*)fep;
++}
++
++/* Returns a pointer to the master key descriptor/identifier within the policy. */
++static inline uint8_t* get_policy_descriptor(libtar_fscrypt_policy_t *fep) {
++	return (uint8_t*)fep->LIBTAR_FSCRYPT_KEY_FIELD;
++}
++
++/*
++ * Returns the size of the raw policy struct in bytes if hex is false,
++ * or the size needed for its NUL-terminated hex string representation
++ * if hex is true (2 hex chars per byte, plus 1 for the terminator).
++ */
++static inline size_t get_policy_size(libtar_fscrypt_policy_t *fep, bool hex) {
++	size_t raw_size = sizeof(*fep);
++	if (hex)
++		return (raw_size * 2) + 1;
++	return raw_size;
++}
++
++/* block.c's single-argument alias for get_policy_size(fep, false). */
++static inline size_t fscrypt_policy_size(libtar_fscrypt_policy_t *fep) {
++	return get_policy_size(fep, false);
++}
++
++/*
++ * Writes a NUL-terminated hex-string representation of the policy's
++ * master key descriptor/identifier into content. Caller must ensure
++ * content is at least get_policy_size(fep, true) bytes.
++ */
++static inline void get_policy_content(libtar_fscrypt_policy_t *fep, char *content) {
++	static const char hex_lookup[] = "0123456789abcdef";
++	uint8_t *descriptor = get_policy_descriptor(fep);
++	size_t descriptor_len = sizeof(fep->LIBTAR_FSCRYPT_KEY_FIELD);
++	size_t i;
++	for (i = 0; i < descriptor_len; i++) {
++		content[i * 2]     = hex_lookup[(descriptor[i] >> 4) & 0xF];
++		content[i * 2 + 1] = hex_lookup[descriptor[i] & 0xF];
++	}
++	content[descriptor_len * 2] = '\0';
++}
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif // _LIBTAR_FSCRYPT_POLICY_COMPAT_H_
+diff --git a/libtar/libtar.h b/libtar/libtar.h
+index f42b201..5b3ad45 100755
+--- a/libtar/libtar.h
++++ b/libtar/libtar.h
+@@ -22,6 +22,7 @@
+ 
+ #ifdef USE_FSCRYPT
+ #include "fscrypt_policy.h"
++#include "fscrypt_policy_compat.h"
+ #endif
+ 
+ #ifdef __cplusplus
+@@ -71,7 +72,7 @@ struct tar_header
+ 	char *gnu_longlink;
+ 	char *selinux_context;
+ #ifdef USE_FSCRYPT
+-	fscrypt_policy  *fep;
++	libtar_fscrypt_policy_t  *fep;
+ #endif
+ 	int has_cap_data;
+ 	struct vfs_cap_data cap_data;
+diff --git a/partition.cpp b/partition.cpp
+index 5553918..2242538 100755
+--- a/partition.cpp
++++ b/partition.cpp
+@@ -792,38 +792,17 @@ bool TWPartition::Decrypt_FBE_DE() {
+ 	ExcludeAll(Mount_Point + "/per_boot"); // removed each boot by init
+ 	ExcludeAll(Mount_Point + "/gsi"); // cow devices
+ 
+-	int retry_count = 3;
+-	while (!android::keystore::Decrypt_DE() && --retry_count)
+-		usleep(2000);
+-	if (retry_count > 0) {
+-		PartitionManager.Set_Crypto_State();
+-		Is_Encrypted = true;
+-		Is_Decrypted = false;
+-		DataManager::SetValue(TW_IS_ENCRYPTED, 1);
+-		string filename;
+-		int pwd_type = android::keystore::Get_Password_Type(0, filename);
+-		if (pwd_type < 0) {
+-			LOGERR("This TWRP does not have synthetic password decrypt support\n");
+-			pwd_type = 0;  // default password
+-		}
+-		PartitionManager.Parse_Users();  // after load_all_de_keys() to parse_users
+-		std::vector<users_struct>::iterator iter;
+-		std::vector<users_struct>* userList = PartitionManager.Get_Users_List();
+-		for (iter = userList->begin(); iter != userList->end(); iter++) {
+-			if (atoi((*iter).userId.c_str()) != 0) {
+-				ExcludeAll(Mount_Point + "/system_de/" + (*iter).userId + "/spblob");
+-				ExcludeAll(Mount_Point + "/system/users/" + (*iter).userId + "/gatekeeper.password.key");
+-				ExcludeAll(Mount_Point + "/system/users/" + (*iter).userId + "/gatekeeper.pattern.key");
+-				ExcludeAll(Mount_Point + "/system/users/" + (*iter).userId + "/locksettings.db");
+-				ExcludeAll(Mount_Point + "/system/users/" + (*iter).userId + "/locksettings.db-wal");
+-			}
+-		}
+-		DataManager::SetValue(TW_CRYPTO_PWTYPE, pwd_type);
+-		DataManager::SetValue("tw_crypto_pwtype_0", pwd_type);
+-		DataManager::SetValue(TW_CRYPTO_PASSWORD, "");
+-		DataManager::SetValue("tw_crypto_display", "");
+-		return true;
+-	}
++		// In TWRP 14.1, decryption is handled by the Decrypt class via user input.
++	// We just set the state here to indicate FBE is present.
++	PartitionManager.Set_Crypto_State();
++	Is_Encrypted = true;
++	Is_Decrypted = false;
++	DataManager::SetValue(TW_IS_ENCRYPTED, 1);
++	DataManager::SetValue(TW_CRYPTO_PWTYPE, 0);
++	DataManager::SetValue("tw_crypto_pwtype_0", 0);
++	DataManager::SetValue(TW_CRYPTO_PASSWORD, "");
++	DataManager::SetValue("tw_crypto_display", "");
++	return true;
+ #else
+ 		LOGERR("FBE found but FBE support not present in TWRP\n");
+ #endif

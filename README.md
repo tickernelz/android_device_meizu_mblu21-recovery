@@ -110,7 +110,7 @@ CI does the builds: `.github/workflows/build.yml` runs a matrix of TWRP (`twrp-1
 
 Manifest choice: the newest branch of each project, because decryption has to read data written by Android 17.
 
-- TWRP: `twrp-14.1` (Android 14). TeamWin has no newer recovery branch (`android_bootable_recovery` ends at `android-14.1`).
+- TWRP: `twrp-14.1` (Android 14). TeamWin has no newer recovery branch (`android_bootable_recovery` ends at `android-14.1`). Its head (`426b747`) does not build with `TW_INCLUDE_CRYPTO`: libtar links AIDL `-ndk_platform` modules that no longer exist and uses an fscrypt policy API that TeamWin's `android-14.1` vold no longer provides ([minimal-manifest issue 77](https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp/issues/77)). CI applies the open TeamWin Gerrit changes that fix this, stored in `patches/twrp-14.1/bootable/recovery/`: [8742](https://gerrit.twrp.me/c/android_bootable_recovery/+/8742) (ndk suffix), [8744](https://gerrit.twrp.me/c/android_bootable_recovery/+/8744) and [8745](https://gerrit.twrp.me/c/android_bootable_recovery/+/8745) (FDE removal, fscrypt policy API), plus their base commit `07284fb` (`task_profiles.json` dependency). Drop them once TeamWin merges these changes.
 - OrangeFox: `fox_16.0` (Android 16, `android-16.0.0_r1`), the newest OrangeFox manifest and the only one whose keystore2 already uses the Android 17 database version. It builds with `lunch twrp_mblu21-bp2a-eng`.
 
 Local build:
