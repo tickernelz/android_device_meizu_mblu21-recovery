@@ -28,6 +28,20 @@ mkdir -p "$src/device/meizu"
 rsync -a --delete --exclude .git --exclude .github "$GITHUB_WORKSPACE/tree/" "$src/device/meizu/mblu21/"
 df -h "$WORK"
 
+free_gb="$(df -BG --output=avail "$WORK" | tail -1 | tr -dc 0-9)"
+extra_swap=$(( free_gb - 22 ))
+if [ "$extra_swap" -gt 24 ]; then
+  extra_swap=24
+fi
+if [ "$extra_swap" -ge 4 ]; then
+  sudo fallocate -l "${extra_swap}G" "$WORK/swap2"
+  sudo chmod 600 "$WORK/swap2"
+  sudo mkswap "$WORK/swap2" > /dev/null
+  sudo swapon -p 0 "$WORK/swap2"
+fi
+swapon --show
+while sleep 60; do free -m | awk -v t="$(date -u +%T)" '/Mem:/{m=$3} /Swap:/{s=$3} END{print "mem " t " used=" m "M swap=" s "M"}'; done &
+
 cd "$src"
 export ALLOW_MISSING_DEPENDENCIES=true
 if [ "$FLAVOR" = orangefox ]; then

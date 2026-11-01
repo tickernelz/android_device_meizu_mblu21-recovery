@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: build-${{ github.ref }}
+  group: build-${{ github.sha }}
   cancel-in-progress: false
 
 jobs:
@@ -48,7 +48,14 @@ jobs:
           sudo fallocate -l 12G /mnt/swapfile
           sudo chmod 600 /mnt/swapfile
           sudo mkswap /mnt/swapfile > /dev/null
-          sudo swapon /mnt/swapfile
+          sudo swapon -p 0 /mnt/swapfile
+          if sudo modprobe zram 2>/dev/null; then
+            echo zstd | sudo tee /sys/block/zram0/comp_algorithm > /dev/null || true
+            echo 12G | sudo tee /sys/block/zram0/disksize > /dev/null
+            sudo mkswap /dev/zram0 > /dev/null
+            sudo swapon -p 100 /dev/zram0
+          fi
+          swapon --show
           df -h / /mnt
           free -h
 
