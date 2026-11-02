@@ -4,7 +4,11 @@
 #
 
 PRODUCT_USE_DYNAMIC_PARTITIONS := true
+ifneq ($(wildcard vendor/shrp),)
+PRODUCT_SHIPPING_API_LEVEL := 32
+else
 PRODUCT_SHIPPING_API_LEVEL := 33
+endif
 
 PRODUCT_PACKAGES += \
     mblu21_stock_vendor_ramdisk \
