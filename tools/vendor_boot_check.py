@@ -5,6 +5,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import struct
 import subprocess
 import sys
@@ -435,7 +436,7 @@ def feature_checks(by_name, flavor, zip_path, results, record, image_sha256=None
         if zip_path:
             embedded = zip_member(zip_path, "recovery.img")
             cpio = [n for n in __import__("zipfile").ZipFile(zip_path).namelist() if n.endswith(".cpio")]
-            whole_image = binary is not None and b'FOX_INSTALLER_VENDOR_BOOT_RAMDISK_INSTALL="0"' in binary
+            whole_image = binary is not None and re.search(rb'^FOX_INSTALLER_VENDOR_BOOT_RAMDISK_INSTALL="?0"?$', binary, re.M) is not None
             same_image = embedded is not None and sha256(embedded) == image_sha256
             installs_image = whole_image and same_image
             detail.update({"whole_image_install": whole_image, "recovery_img_sha256_matches_image": same_image,
