@@ -81,10 +81,12 @@ BOARD_GROUP_UNISOC_PARTITION_LIST := \
     odm \
     product \
     system \
-    system_dlkm \
     system_ext \
     vendor \
     vendor_dlkm
+ifeq ($(wildcard vendor/shrp),)
+BOARD_GROUP_UNISOC_PARTITION_LIST += system_dlkm
+endif
 
 BOARD_USES_METADATA_PARTITION := true
 TARGET_USERIMAGES_USE_EXT4 := true
