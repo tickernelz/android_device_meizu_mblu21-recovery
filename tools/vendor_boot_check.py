@@ -304,6 +304,20 @@ def crypto_checks(by_name, rom_fstab_path, record):
     record("recovery_keystore_and_service_managers_link", not system_unresolved,
            {"binaries": RECOVERY_CRYPTO_BINARIES, "unresolved": system_unresolved[:40]})
 
+    stock_roots = set(STOCK_SERVICE_EXECUTABLES)
+    system_elves = sorted(name for name, entry in by_name.items()
+                          if name.startswith(("system/bin/", "system/lib64/")) and name not in stock_roots
+                          and not name.startswith("system/lib64/hw/")
+                          and entry["mode"] & 0o170000 == 0o100000 and entry["content"][:4] == b"\x7fELF")
+    unlinked = []
+    for root in system_elves:
+        try:
+            unlinked.extend(load_set(by_name, root, SYSTEM_SEARCH_PATH)[1])
+        except ValueError:
+            continue
+    record("system_binaries_link", not unlinked,
+           {"objects": len(system_elves), "unresolved": sorted(set(unlinked))[:40]})
+
     tee_services = {name: services.get(name) for name in TEE_SERVICE_NAMES}
     bad_paths = {name: path for name, path in tee_services.items()
                  if path is None or resolve(by_name, path.lstrip("/")) is None}
