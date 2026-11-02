@@ -120,6 +120,14 @@ VENDOR_SECURITY_PATCH := $(PLATFORM_SECURITY_PATCH)
 TW_INCLUDE_CRYPTO := true
 ifeq ($(wildcard bootable/recovery/orangefox.mk),)
 TW_RECOVERY_ADDITIONAL_RELINK_BINARY_FILES += $(TARGET_OUT_SYSTEM_EXT_EXECUTABLES)/hwservicemanager
+MBLU21_KEYSTORE2_LIBS := \
+    android.hardware.confirmationui-V1-ndk \
+    android.hardware.security.keymint-V3-ndk \
+    android.hardware.security.rkp-V3-ndk \
+    android.security.aaid_aidl-cpp \
+    android.system.keystore2-V4-ndk
+TARGET_RECOVERY_DEVICE_MODULES += $(MBLU21_KEYSTORE2_LIBS)
+TW_RECOVERY_ADDITIONAL_RELINK_LIBRARY_FILES += $(addprefix $(TARGET_OUT_SHARED_LIBRARIES)/,$(addsuffix .so,$(MBLU21_KEYSTORE2_LIBS)))
 endif
 TW_INCLUDE_FBE_METADATA_DECRYPT := true
 TW_USE_FSCRYPT_POLICY := 2
