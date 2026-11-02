@@ -20,6 +20,11 @@ case "$FLAVOR" in
     cd "$src"
     repo init --depth=1 -u https://github.com/SHRP-Reborn/manifest.git -b "$MANIFEST_BRANCH" -g default,-mips,-darwin,-notdefault
     repo sync -c -j"$jobs" --force-sync --no-clone-bundle --no-tags --optimized-fetch --prune
+    for patch_dir in "$GITHUB_WORKSPACE/tree/patches/$MANIFEST_BRANCH"/*/*/; do
+      project="${patch_dir#"$GITHUB_WORKSPACE/tree/patches/$MANIFEST_BRANCH/"}"
+      echo "applying patches to $project at $(git -C "$project" rev-parse --short HEAD)"
+      git -C "$project" am --3way "$patch_dir"*.patch
+    done
     ;;
   *)
     echo "unknown flavor: $FLAVOR" >&2

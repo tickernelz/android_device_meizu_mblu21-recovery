@@ -1,0 +1,22 @@
+From 9a656ba596df0090b25beadbe7f4d2be9ddf6801 Mon Sep 17 00:00:00 2001
+From: Zhafron <zhafronadani@gmail.com>
+Date: Mon, 2 Nov 2026 12:51:25 +0700
+Subject: [PATCH] libcutils: fs_config: make first-stage fsck.f2fs executable
+
+Vendor ramdisks built on Android 12.1 got first_stage_ramdisk/system/bin/fsck.f2fs as 0644, so first-stage init could not check an f2fs /metadata. Android 13 lists it next to e2fsck; add the same entry.
+---
+ libcutils/fs_config.cpp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/libcutils/fs_config.cpp b/libcutils/fs_config.cpp
+index e9497a8..a6835fc 100644
+--- a/libcutils/fs_config.cpp
++++ b/libcutils/fs_config.cpp
+@@ -211,6 +211,7 @@ static const struct fs_path_config android_files[] = {
+     { 00755, AID_ROOT,      AID_ROOT,      0, "first_stage_ramdisk/system/bin/resize2fs" },
+     { 00755, AID_ROOT,      AID_ROOT,      0, "first_stage_ramdisk/system/bin/snapuserd" },
+     { 00755, AID_ROOT,      AID_ROOT,      0, "first_stage_ramdisk/system/bin/tune2fs" },
++    { 00755, AID_ROOT,      AID_ROOT,      0, "first_stage_ramdisk/system/bin/fsck.f2fs" },
+     // generic defaults
+     { 00755, AID_ROOT,      AID_ROOT,      0, "bin/*" },
+     { 00640, AID_ROOT,      AID_SHELL,     0, "fstab.*" },

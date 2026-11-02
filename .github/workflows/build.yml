@@ -86,6 +86,7 @@ jobs:
         run: tree/.github/scripts/build.sh
 
       - name: Validate against stock vendor_boot
+        id: validate
         run: |
           img="$WORK/src/out/target/product/mblu21/vendor_boot.img"
           mkdir -p dist
@@ -95,6 +96,16 @@ jobs:
             --rom-fstab tree/prebuilt/fstab.rom.ums9230_6h10 \
             $(ls "$WORK"/src/out/target/product/mblu21/OrangeFox*.zip 2>/dev/null | sed 's/^/--zip /') \
             --report dist/validation.json | tee dist/validation.txt
+
+      - name: Keep image that failed validation
+        if: failure() && steps.validate.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed-${{ matrix.flavor }}
+          path: |
+            ${{ env.WORK }}/src/out/target/product/mblu21/vendor_boot.img
+            dist/
+          retention-days: 7
 
       - name: Package
         run: |

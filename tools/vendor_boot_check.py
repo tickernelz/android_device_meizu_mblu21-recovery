@@ -414,14 +414,14 @@ def feature_checks(by_name, flavor, zip_path, results, record, image_sha256=None
                            {m: flag_has(m, "backup=1") for m in ("/boot", "/init_boot", "/vendor_boot", "/dtbo", "/super", "/metadata")}),
         "touch": (has("vendor/lib/modules/1.1/focaltech_spi_v4_1.ko") and has("vendor/lib/modules/1.1/spi_ilitek.ko") and contains(by_name, recovery, "focaltech_spi_v4_1.ko"),
                   {"modules_in_ramdisk": has("vendor/lib/modules/1.1/spi_ilitek.ko"), "load_list_in_binary": contains(by_name, recovery, "spi_ilitek.ko")}),
-        "brightness": (contains(by_name, recovery, "/sys/class/backlight/sprd_backlight/brightness"), {}),
+        "brightness": (contains(by_name, recovery + libs, "/sys/class/backlight/sprd_backlight/brightness"), {}),
         "display": (has("twres/ui.xml"), {}),
         "battery": (contains(by_name, recovery, "/sys/class/power_supply/battery/capacity") and {"sc27xx_fuel_gauge.ko", "sprd-charger-manager.ko"} <= recovery_modules,
                     {"sysfs_reader_in_binary": contains(by_name, recovery, "/sys/class/power_supply/battery/capacity")}),
         "vibrator": (has("system/bin/vendor.sprd.hardware.vibrator-service") and has("vendor/etc/vintf/manifest/vibrator.xml")
-                     and "vendor.sprd.hardware.vibrator-service" in rc and contains(by_name, recovery, "IVibrator/default")
+                     and "vendor.sprd.hardware.vibrator-service" in rc and contains(by_name, recovery + libs, "IVibrator/default")
                      and "sc27xx-vibra.ko" in recovery_modules,
-                     {"aidl_instance_in_binary": contains(by_name, recovery, "IVibrator/default")}),
+                     {"aidl_instance_in_binary": contains(by_name, recovery + libs, "IVibrator/default")}),
         "terminal": (has("system/bin/sh") and (has("sbin/bash") or has("system/bin/bash")), {"bash": has("sbin/bash") or has("system/bin/bash")}),
     }
     if flavor == "orangefox":
