@@ -13,6 +13,7 @@ case "$FLAVOR" in
     ;;
   shrp)
     lunch_target=twrp_mblu21-eng
+    "$GITHUB_WORKSPACE/tree/.github/scripts/python2.sh"
     mkdir -p "$src"
     cd "$src"
     repo init --depth=1 --no-repo-verify -u https://github.com/SHRP-Reborn/manifest.git -b "$MANIFEST_BRANCH" -g default,-mips,-darwin,-notdefault
