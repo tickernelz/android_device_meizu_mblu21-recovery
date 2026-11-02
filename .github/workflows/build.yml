@@ -46,13 +46,13 @@ jobs:
           sudo apt-get -qq remove --purge '^llvm-.*' '^mysql-.*' '^php.*' 'google-chrome-stable' 'firefox' \
             'microsoft-edge-stable' 'azure-cli' 'powershell' > /dev/null 2>&1 || true
           sudo apt-get -qq autoremove > /dev/null 2>&1 || true
-          sudo mkdir -p "$WORK"
-          sudo chown "$USER:$USER" "$WORK"
           sudo swapoff -a || true
-          sudo fallocate -l 12G /mnt/swapfile
-          sudo chmod 600 /mnt/swapfile
-          sudo mkswap /mnt/swapfile > /dev/null
-          sudo swapon -p 0 /mnt/swapfile
+          sudo rm -f /mnt/swapfile /swapfile
+          tree/.github/scripts/work-space.sh
+          sudo fallocate -l 12G "$WORK/swapfile"
+          sudo chmod 600 "$WORK/swapfile"
+          sudo mkswap "$WORK/swapfile" > /dev/null
+          sudo swapon -p 0 "$WORK/swapfile"
           if sudo modprobe zram 2>/dev/null; then
             echo zstd | sudo tee /sys/block/zram0/comp_algorithm > /dev/null || true
             echo 12G | sudo tee /sys/block/zram0/disksize > /dev/null
