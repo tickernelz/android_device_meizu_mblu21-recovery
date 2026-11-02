@@ -342,6 +342,7 @@ FEATURE_PHONE_TESTS = {
     "terminal": "The terminal opens and runs ls /data",
     "orangefox_ota_survival": "After a LineageOS ZIP install, OrangeFox reflashes itself and is still the recovery after reboot",
     "orangefox_themes": "Changing accent and theme in settings persists across reboot",
+    "orangefox_installer_zip": "Install the OrangeFox ZIP from OrangeFox itself; both vendor_boot slots then hold the released image and the phone boots to OrangeFox",
     "shrp_device_flags": "About shows device mblu21, A/B, maintainer tickernelz; theme toggle works",
 }
 
@@ -383,7 +384,7 @@ def zip_member(zip_path, name):
         return archive.read(name) if name in archive.namelist() else None
 
 
-def feature_checks(by_name, flavor, zip_path, results, record):
+def feature_checks(by_name, flavor, zip_path, results, record, image_sha256=None):
     recovery = ("system/bin/recovery",)
     libs = tuple(name for name in by_name if name.startswith("system/lib64/"))
     flags = parse_twrp_flags(by_name)
@@ -429,6 +430,17 @@ def feature_checks(by_name, flavor, zip_path, results, record):
             contains(by_name, recovery, "orangefox.vendor_boot.recovery") and binary is not None and b'FOX_VENDOR_BOOT_RECOVERY="1"' in binary,
             {"vendor_boot_mode_in_binary": contains(by_name, recovery, "orangefox.vendor_boot.recovery"), "installer_zip_vendor_boot": binary is not None and b'FOX_VENDOR_BOOT_RECOVERY="1"' in binary})
         features["orangefox_themes"] = (has("twres/themes/accent.xml") and has("twres/themes/style.xml"), {})
+        installs_image = False
+        detail = {"zip_given": bool(zip_path)}
+        if zip_path:
+            embedded = zip_member(zip_path, "recovery.img")
+            cpio = [n for n in __import__("zipfile").ZipFile(zip_path).namelist() if n.endswith(".cpio")]
+            whole_image = binary is not None and b'FOX_INSTALLER_VENDOR_BOOT_RAMDISK_INSTALL="0"' in binary
+            same_image = embedded is not None and sha256(embedded) == image_sha256
+            installs_image = whole_image and same_image
+            detail.update({"whole_image_install": whole_image, "recovery_img_sha256_matches_image": same_image,
+                           "ramdisk_cpio_in_zip": cpio})
+        features["orangefox_installer_zip"] = (installs_image, detail)
     if flavor == "shrp":
         features["shrp_device_flags"] = (contains(by_name, recovery, "shrp_rec") and has("twres/version"), {})
     for name, (ok, detail) in features.items():
@@ -503,7 +515,7 @@ def check(image_path, reference_path, flavor, report_path, rom_fstab_path=None, 
 
     if rom_fstab_path:
         crypto_checks(by_name, rom_fstab_path, record)
-        feature_checks(by_name, flavor, zip_path, results, record)
+        feature_checks(by_name, flavor, zip_path, results, record, sha256(open(image_path, "rb").read()))
 
     summary = {
         "image": os.path.basename(image_path),

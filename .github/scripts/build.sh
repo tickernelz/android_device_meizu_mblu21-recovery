@@ -2,12 +2,14 @@
 set -euo pipefail
 
 src="$WORK/src"
+fox_sync_commit=03434a833701f73430cd085738ae0bf54f2231f1
 jobs="$(nproc)"
 
 case "$FLAVOR" in
   orangefox)
     lunch_target=twrp_mblu21-bp2a-eng
-    git clone --depth 1 https://gitlab.com/OrangeFox/sync.git "$WORK/fox-sync"
+    git clone https://gitlab.com/OrangeFox/sync.git "$WORK/fox-sync"
+    git -C "$WORK/fox-sync" checkout --detach "$fox_sync_commit"
     cd "$WORK/fox-sync"
     ./orangefox_sync.sh --branch "${MANIFEST_BRANCH#fox_}" --path "$src"
     ;;
@@ -16,7 +18,7 @@ case "$FLAVOR" in
     "$GITHUB_WORKSPACE/tree/.github/scripts/python2.sh"
     mkdir -p "$src"
     cd "$src"
-    repo init --depth=1 --no-repo-verify -u https://github.com/SHRP-Reborn/manifest.git -b "$MANIFEST_BRANCH" -g default,-mips,-darwin,-notdefault
+    repo init --depth=1 -u https://github.com/SHRP-Reborn/manifest.git -b "$MANIFEST_BRANCH" -g default,-mips,-darwin,-notdefault
     repo sync -c -j"$jobs" --force-sync --no-clone-bundle --no-tags --optimized-fetch --prune
     ;;
   *)
@@ -24,6 +26,11 @@ case "$FLAVOR" in
     exit 1
     ;;
 esac
+
+(cd "$src" && repo manifest -r -o "$WORK/manifest-pinned.xml")
+if [ "$FLAVOR" = orangefox ]; then
+  sed -i "s#<manifest>#<manifest>\n  <!-- OrangeFox/sync $fox_sync_commit -->#" "$WORK/manifest-pinned.xml"
+fi
 
 mkdir -p "$src/device/meizu"
 rsync -a --delete --exclude .git --exclude .github "$GITHUB_WORKSPACE/tree/" "$src/device/meizu/mblu21/"
@@ -42,6 +49,8 @@ if [ "$extra_swap" -ge 4 ]; then
 fi
 swapon --show
 while sleep 60; do free -m | awk -v t="$(date -u +%T)" '/Mem:/{m=$3} /Swap:/{s=$3} END{print "mem " t " used=" m "M swap=" s "M"}'; done &
+mem_logger=$!
+trap 'kill "$mem_logger"' EXIT
 
 cd "$src"
 export ALLOW_MISSING_DEPENDENCIES=true

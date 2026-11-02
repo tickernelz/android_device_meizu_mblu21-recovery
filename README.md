@@ -126,6 +126,8 @@ Keep the full backup of the phone (`vendor_boot_a.bin` from the dump) before you
    Use `vendor_boot_b` when the current slot is `b`. Flash both slots to keep the recovery after an A/B update. `fastboot boot` does not work for `vendor_boot` images.
 3. Boot into recovery with `fastboot reboot recovery` or `adb reboot recovery`.
 
+OrangeFox releases also carry an installer ZIP. Installed from OrangeFox (or another recovery), it writes its `recovery.img` to **both** `vendor_boot_a` and `vendor_boot_b`; CI checks that this `recovery.img` is byte-identical to the released `vendor_boot.img`. Of the helper scripts inside the ZIP only `flash-whole-image.sh`/`.bat` work on this phone: `flash-ramdisk.*` expect a separate recovery ramdisk fragment, which this single-fragment layout does not have. OrangeFox ZIPs from releases r4, r7, r8 and r11 cannot install (they were built in ramdisk mode and abort before writing anything); use their `vendor_boot.img` instead.
+
 ## Going back
 
 - **Stock recovery:** flash the stock image from the backup: `fastboot flash vendor_boot_a vendor_boot_a.bin` (and `_b` if you flashed it).
@@ -136,7 +138,7 @@ If the phone no longer boots at all after flashing, flash the stock `vendor_boot
 
 ## Building
 
-CI does the builds: `.github/workflows/build.yml` runs a matrix of OrangeFox (`fox_16.0`) and SHRP-Reborn (`shrp-12.1`) on every push to `main` and on manual dispatch, then publishes a pre-release per flavour with the image, its SHA-256 and the check report (OrangeFox also its installer ZIP).
+CI does the builds: `.github/workflows/build.yml` runs a matrix of OrangeFox (`fox_16.0`) and SHRP-Reborn (`shrp-12.1`) on every push to `main` and on manual dispatch, then publishes a pre-release per flavour with the image, its SHA-256, the check report and the pinned revision of every synced project (`*-manifest.xml`, from `repo manifest -r`; OrangeFox also its installer ZIP). The `OrangeFox/sync` script is pinned to a commit in `.github/scripts/build.sh`, and `repo` comes from the Ubuntu package with signature verification on. Builds run with a read-only token; only the separate publish job can write releases.
 
 Manifest choice: the newest branch of each project that can build a header v4 `vendor_boot` with decryption.
 
