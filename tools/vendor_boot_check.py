@@ -7,6 +7,7 @@ import json
 import os
 import re
 import struct
+import zipfile
 import subprocess
 import sys
 
@@ -49,6 +50,10 @@ RECOVERY_CRYPTO_BINARIES = (
 STOCK_SERVICE_EXECUTABLES = TEE_EXECUTABLES + ("system/bin/vendor.sprd.hardware.vibrator-service",)
 LIBRARY_SEARCH_PATH = ("vendor/lib64", "vendor/lib64/hw", "system/lib64")
 SYSTEM_SEARCH_PATH = ("system/lib64",)
+TEE_SERVICE_NAMES = (
+    "vendor.rpmbproxy", "vendor.prodproxy", "vendor.nsproxy", "vendor.teensproxy", "vendor.tee_rpc", "vendor.tsupplicant",
+    "vendor.sprd.hardware.trusty-service", "vendor.keymint-unisoc-2.0", "vendor.gatekeeper-1-0", "mblu21.data-vendor-wait",
+)
 KEYMINT_START_REQUIRES = ("init.svc.vendor.tee_rpc=running", "init.svc.vendor.tsupplicant=running")
 SPOOFED_PROPS = {
     "ro.build.version.security_patch": "2099-12-31",
@@ -299,11 +304,13 @@ def crypto_checks(by_name, rom_fstab_path, record):
     record("recovery_keystore_and_service_managers_link", not system_unresolved,
            {"binaries": RECOVERY_CRYPTO_BINARIES, "unresolved": system_unresolved[:40]})
 
-    bad_paths = {name: path for name, path in services.items() if resolve(by_name, path.lstrip("/")) is None}
+    tee_services = {name: services.get(name) for name in TEE_SERVICE_NAMES}
+    bad_paths = {name: path for name, path in tee_services.items()
+                 if path is None or resolve(by_name, path.lstrip("/")) is None}
     keymint_triggers = [t["trigger"] for t in triggers if "start vendor.keymint-unisoc-2.0" in t["commands"]]
     ordered = bool(keymint_triggers) and all(all(req in trig for req in KEYMINT_START_REQUIRES) for trig in keymint_triggers)
     record("tee_services_defined_and_ordered", not bad_paths and ordered,
-           {"services": sorted(services), "bad_paths": bad_paths, "keymint_start_triggers": keymint_triggers})
+           {"tee_services": sorted(tee_services), "bad_paths": bad_paths, "keymint_start_triggers": keymint_triggers})
 
     rom = parse_fstab(open(rom_fstab_path).read())
     fstab_entry = resolve(by_name, "system/etc/recovery.fstab")
@@ -344,7 +351,8 @@ FEATURE_PHONE_TESTS = {
     "orangefox_ota_survival": "After a LineageOS ZIP install, OrangeFox reflashes itself and is still the recovery after reboot",
     "orangefox_themes": "Changing accent and theme in settings persists across reboot",
     "orangefox_installer_zip": "Install the OrangeFox ZIP from OrangeFox itself; both vendor_boot slots then hold the released image and the phone boots to OrangeFox",
-    "shrp_device_flags": "About shows device mblu21, A/B, maintainer tickernelz; theme toggle works",
+    "shrp_device_flags": "About shows device mblu21, A/B, maintainer tickernelz",
+    "shrp_express_settings": "Change the theme and set a recovery lock; both survive a reboot, /data/unencrypted/etc/shrp holds them, and boot_a/boot_b SHA-256 are unchanged",
 }
 
 
@@ -380,7 +388,6 @@ def rc_text(by_name):
 
 
 def zip_member(zip_path, name):
-    import zipfile
     with zipfile.ZipFile(zip_path) as archive:
         return archive.read(name) if name in archive.namelist() else None
 
@@ -394,6 +401,11 @@ def feature_checks(by_name, flavor, zip_path, results, record, image_sha256=None
 
     def has(path):
         return resolve(by_name, path) is not None
+
+    device_rc = resolve(by_name, "init.recovery.ums9230_6h10.rc")
+    device_services = rc_services_and_triggers(device_rc["content"].decode())[0] if device_rc else {}
+    vibrator_path = device_services.get("vendor.vibrator", "")
+    vibrator_service_ok = bool(vibrator_path) and has(vibrator_path.lstrip("/"))
 
     def flag_has(mount, token):
         return token in flags.get(mount, "")
@@ -420,9 +432,9 @@ def feature_checks(by_name, flavor, zip_path, results, record, image_sha256=None
         "battery": (contains(by_name, recovery, "/sys/class/power_supply/battery/capacity") and {"sc27xx_fuel_gauge.ko", "sprd-charger-manager.ko"} <= recovery_modules,
                     {"sysfs_reader_in_binary": contains(by_name, recovery, "/sys/class/power_supply/battery/capacity")}),
         "vibrator": (has("system/bin/vendor.sprd.hardware.vibrator-service") and has("vendor/etc/vintf/manifest/vibrator.xml")
-                     and "vendor.sprd.hardware.vibrator-service" in rc and contains(by_name, recovery + libs, "IVibrator/default")
+                     and vibrator_service_ok and contains(by_name, recovery + libs, "IVibrator/default")
                      and "sc27xx-vibra.ko" in recovery_modules,
-                     {"aidl_instance_in_binary": contains(by_name, recovery + libs, "IVibrator/default")}),
+                     {"rc_service_path_resolves": vibrator_service_ok, "aidl_instance_in_binary": contains(by_name, recovery + libs, "IVibrator/default")}),
         "terminal": (has("system/bin/sh") and (has("sbin/bash") or has("system/bin/bash")), {"bash": has("sbin/bash") or has("system/bin/bash")}),
     }
     if flavor == "orangefox":
@@ -435,7 +447,8 @@ def feature_checks(by_name, flavor, zip_path, results, record, image_sha256=None
         detail = {"zip_given": bool(zip_path)}
         if zip_path:
             embedded = zip_member(zip_path, "recovery.img")
-            cpio = [n for n in __import__("zipfile").ZipFile(zip_path).namelist() if n.endswith(".cpio")]
+            with zipfile.ZipFile(zip_path) as archive:
+                cpio = [n for n in archive.namelist() if n.endswith(".cpio")]
             whole_image = binary is not None and re.search(rb'^FOX_INSTALLER_VENDOR_BOOT_RAMDISK_INSTALL="?0"?$', binary, re.M) is not None
             same_image = embedded is not None and sha256(embedded) == image_sha256
             installs_image = whole_image and same_image
@@ -444,6 +457,8 @@ def feature_checks(by_name, flavor, zip_path, results, record, image_sha256=None
         features["orangefox_installer_zip"] = (installs_image, detail)
     if flavor == "shrp":
         features["shrp_device_flags"] = (contains(by_name, recovery, "shrp_rec") and has("twres/version"), {})
+        repack = {needle: contains(by_name, recovery + libs, needle) for needle in ("create_env", "by-name/boot_")}
+        features["shrp_express_settings"] = (not any(repack.values()), {"legacy_repack_strings": repack})
     for name, (ok, detail) in features.items():
         record(f"feature_{name}", ok, dict(detail, phone_test=FEATURE_PHONE_TESTS[name]))
 

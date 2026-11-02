@@ -171,4 +171,6 @@ SHRP_EXTERNAL := /external_sd
 SHRP_OTG := /usb_otg
 SHRP_FLASH := 0
 SHRP_DARK := true
+SHRP_EXPRESS := true
+SHRP_EXPRESS_USE_DATA := true
 endif

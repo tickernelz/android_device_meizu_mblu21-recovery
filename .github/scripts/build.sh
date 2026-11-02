@@ -20,6 +20,7 @@ case "$FLAVOR" in
     cd "$src"
     repo init --depth=1 -u https://github.com/SHRP-Reborn/manifest.git -b "$MANIFEST_BRANCH" -g default,-mips,-darwin,-notdefault
     repo sync -c -j"$jobs" --force-sync --no-clone-bundle --no-tags --optimized-fetch --prune
+    repo manifest -r -o "$WORK/manifest-pinned.xml"
     for patch_dir in "$GITHUB_WORKSPACE/tree/patches/$MANIFEST_BRANCH"/*/*/; do
       project="${patch_dir#"$GITHUB_WORKSPACE/tree/patches/$MANIFEST_BRANCH/"}"
       echo "applying patches to $project at $(git -C "$project" rev-parse --short HEAD)"
@@ -32,8 +33,8 @@ case "$FLAVOR" in
     ;;
 esac
 
-(cd "$src" && repo manifest -r -o "$WORK/manifest-pinned.xml")
 if [ "$FLAVOR" = orangefox ]; then
+  (cd "$src" && repo manifest -r -o "$WORK/manifest-pinned.xml")
   sed -i "s#<manifest>#<manifest>\n  <!-- OrangeFox/sync $fox_sync_commit -->#" "$WORK/manifest-pinned.xml"
 fi
 

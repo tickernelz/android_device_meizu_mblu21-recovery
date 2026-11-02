@@ -68,7 +68,8 @@ Each feature has a static check in CI (`feature_*` in `validation.json`) and a t
 | Terminal | `sh` and `bash` present | Terminal opens and runs `ls /data` |
 | OrangeFox: OTA survival | vendor_boot mode in the binary; installer ZIP has `FOX_VENDOR_BOOT_RECOVERY="1"` | After installing a LineageOS ZIP, OrangeFox reflashes itself and is still the recovery after reboot |
 | OrangeFox: themes | accent and style theme files present | Theme and accent changes persist across reboot |
-| SHRP: device flags | `shrp_rec` setting compiled in, `twres/version` present | About shows mblu21, A/B, maintainer; theme toggle works |
+| SHRP: device flags | `shrp_rec` setting compiled in, `twres/version` present | About shows mblu21, A/B, maintainer |
+| SHRP: theme and lock storage | Express mode compiled in: no `create_env*` repack scripts or `by-name/boot_` writes in the recovery | Change the theme and set a lock; both survive a reboot, `/data/unencrypted/etc/shrp` holds them, `boot_a`/`boot_b` SHA-256 unchanged |
 
 OrangeFox on a virtual A/B device always builds as "vanilla": its MIUI block-OTA menu (`OF_SUPPORT_ALL_BLOCK_OTA_UPDATES`) is disabled by OrangeFox itself, so OTA survival here means the reflash after a ROM ZIP install.
 
@@ -138,14 +139,22 @@ If the phone no longer boots at all after flashing, flash the stock `vendor_boot
 
 ## Building
 
-CI does the builds: `.github/workflows/build.yml` runs a matrix of OrangeFox (`fox_16.0`) and SHRP-Reborn (`shrp-12.1`) on every push to `main` and on manual dispatch, then publishes a pre-release per flavour with the image, its SHA-256, the check report and the pinned revision of every synced project (`*-manifest.xml`, from `repo manifest -r`; OrangeFox also its installer ZIP). The `OrangeFox/sync` script is pinned to a commit in `.github/scripts/build.sh`, and `repo` comes from the Ubuntu package with signature verification on. Builds run with a read-only token; only the separate publish job can write releases.
+CI does the builds: `.github/workflows/build.yml` runs a matrix of OrangeFox (`fox_16.0`) and SHRP-Reborn (`shrp-12.1`) on every push to `main` and on manual dispatch, then publishes a pre-release per flavour with the image, its SHA-256, the check report and the pinned revision of every synced project (`*-manifest.xml`, from `repo manifest -r`, taken before the local patches in `patches/` are applied, so every revision exists upstream; OrangeFox also its installer ZIP). The `OrangeFox/sync` script is pinned to a commit in `.github/scripts/build.sh`, and `repo` comes from the Ubuntu package with signature verification on. Builds run with a read-only token; only the separate publish job can write releases.
 
 Manifest choice: the newest branch of each project that can build a header v4 `vendor_boot` with decryption.
 
 - OrangeFox: `fox_16.0` (Android 16, `android-16.0.0_r1`), the newest OrangeFox manifest and the only one whose keystore2 already uses the Android 17 database version. It builds with `lunch twrp_mblu21-bp2a-eng`.
 - SHRP-Reborn: `shrp-12.1` (Android 12.1, `android-12.1.0_r4`), the only SHRP-Reborn manifest. Its recovery repository also has an `android-14` branch, but there is no manifest, `vendor/shrp`, `vendor/twrp` or `build` branch to build it with. Android 12.1 already supports header v4 `vendor_boot` (vendor bootconfig, ramdisk table) and merging the recovery into the vendor ramdisk, and SHRP uses TeamWin's `android-12.1` vold and keystore2. It builds with `lunch twrp_mblu21-eng`. SHRP's flashable ZIP step only runs for `recoveryimage`/`bootimage`, so SHRP releases contain the `vendor_boot.img` only.
 
-Local build (OrangeFox; for SHRP use `repo init -u https://github.com/SHRP-Reborn/manifest.git -b shrp-12.1`, skip `orangefox_vars.sh`, and `lunch twrp_mblu21-eng`):
+SHRP runs in Express mode (`SHRP_EXPRESS`, `SHRP_EXPRESS_USE_DATA`): theme and lock settings live in `/data/unencrypted/etc/shrp`. Without Express, SHRP saves them by repacking `boot` and writing it back to `boot_<slot>`, which on this phone holds the GKI kernel, not the recovery.
+
+Local build for SHRP: needs `python2.7` on `PATH` (`.github/scripts/python2.sh` builds it), `repo init -u https://github.com/SHRP-Reborn/manifest.git -b shrp-12.1`, `repo sync`, then apply the local patches before building, otherwise the first-stage `fsck.f2fs` is packed non-executable:
+
+```sh
+git -C system/core am device/meizu/mblu21/patches/shrp-12.1/system/core/*.patch
+```
+
+Then skip `orangefox_vars.sh` and `lunch twrp_mblu21-eng`. Local build for OrangeFox:
 
 ```sh
 git clone https://gitlab.com/OrangeFox/sync.git && cd sync && ./orangefox_sync.sh --branch 16.0 --path ~/fox16 && cd ~/fox16
