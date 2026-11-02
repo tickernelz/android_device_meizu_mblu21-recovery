@@ -36,6 +36,11 @@ jobs:
       MANIFEST_BRANCH: ${{ matrix.manifest }}
       WORK: /mnt/work
     steps:
+      - name: Check out device tree
+        uses: actions/checkout@v4
+        with:
+          path: tree
+
       - name: Free disk space
         run: |
           df -h / /mnt
@@ -62,11 +67,6 @@ jobs:
           swapon --show
           df -h / /mnt
           free -h
-
-      - name: Check out device tree
-        uses: actions/checkout@v4
-        with:
-          path: tree
 
       - name: Install build dependencies
         run: |
