@@ -1,6 +1,6 @@
-# TWRP and OrangeFox for Meizu mBlu 21 (M416H)
+# OrangeFox and SHRP-Reborn for Meizu mBlu 21 (M416H)
 
-Recovery device tree for the Meizu mBlu 21, model M416H. One tree builds both TWRP and OrangeFox; GitHub Actions in this repository builds them and publishes `vendor_boot.img` as pre-releases.
+Recovery device tree for the Meizu mBlu 21, model M416H. One tree builds OrangeFox and SHRP-Reborn (Skyhawk Recovery Project); GitHub Actions in this repository builds both and publishes `vendor_boot.img` as pre-releases. TWRP builds were dropped on 2026-11-02; their old releases are marked `SUPERSEDED`.
 
 | | |
 |---|---|
@@ -37,14 +37,42 @@ Because normal boot uses the same image, anything that differs from stock outsid
 | ramdisk table | one fragment, type 1, no name, like stock |
 | `first_stage_ramdisk/`, `lib/modules/` | all 180 stock entries present, same mode, owner and SHA-256, nothing added |
 | module lists | `modules.load` 72 and `modules.load.recovery` 139 entries |
-| recovery | `system/bin/recovery` and `twres/` present (OrangeFox also `FFiles/`) |
-| TEE stack | the 6 Trusty/keymint/gatekeeper programs, their rc file, VINTF fragments, the gatekeeper and rpmbmac trusted apps, and `keystore2`, `servicemanager`, `hwservicemanager` are in the ramdisk |
-| TEE libraries | every `DT_NEEDED` of those programs resolves inside the ramdisk through the `LD_LIBRARY_PATH` its rc service sets, and every non-weak undefined symbol is defined by the loaded set |
+| recovery | `system/bin/recovery` and `twres/` present (OrangeFox also `FFiles/`, SHRP also `twres/version`) |
+| TEE stack | the 6 Trusty/keymint/gatekeeper programs, the stock vibrator HAL, their rc file, VINTF fragments, the gatekeeper and rpmbmac trusted apps, and `keystore2`, `servicemanager`, `hwservicemanager` are in the ramdisk |
+| stock service libraries | every `DT_NEEDED` of the stock TEE and vibrator programs resolves inside the ramdisk through the `LD_LIBRARY_PATH` its rc service sets, and every non-weak undefined symbol is defined by the loaded set |
 | TEE start order | keymint and gatekeeper start only after `tee_rpc` and `tsupplicant` are running |
 | fstab | `/data` and `/metadata` in the recovery fstab equal the ROM fstab (`prebuilt/fstab.rom.ums9230_6h10`): file system, mount options, `fileencryption=`, `keydirectory=` |
 | version props | `ro.build.version.release` 99.87.36, `ro.build.version.security_patch` and `ro.vendor.build.security_patch` 2099-12-31 |
+| features | the `feature_*` checks in [Features](#features) |
 
 The release notes of every build contain the full check output.
+
+## Features
+
+Each feature has a static check in CI (`feature_*` in `validation.json`) and a test that only the phone can run. A failed phone test is a blocker, not a known issue.
+
+| Feature | Static check in CI | Phone test (first session) |
+|---|---|---|
+| Decrypt `/data` | all TEE, stock service, keystore2, fstab and version-prop checks pass | Boot recovery on LineageOS 24 with a PIN set, enter the PIN, `/data/media/0` file names are readable |
+| MTP | MTP FFS endpoint in the recovery, `ffs.mtp` gadget function in the rc | Internal storage shows on a PC over MTP; a file copies both ways |
+| ADB and sideload | `adbd` present, sideload code in the recovery binary | `adb devices` sees the phone; `adb sideload` of a ZIP completes |
+| fastbootd | `fastbootd` and its service present | Reboot to fastbootd; `fastboot getvar is-userspace` is `yes` |
+| USB OTG storage | `/usb_otg` storage entry, `musb_hdrc` and `musb_sprd` in the recovery module list | A FAT32 stick on an OTG adapter mounts |
+| Flash ZIP and image | `flashimg=1` for boot, init_boot, vendor_boot, dtbo; installer code in the binary | Flash a ZIP; flash `vendor_boot.img` through Install Image |
+| Backup and restore | `backup=1` for boot, init_boot, vendor_boot, dtbo, super, metadata | Back up all six, restore boot, phone still boots |
+| Touch | touch modules in the ramdisk and in the recovery's module load list | Touch works over the whole screen |
+| Brightness | backlight path `/sys/class/backlight/sprd_backlight/brightness` in the binary | The slider changes the backlight |
+| Display | theme present (`portrait_hdpi`, 720x1600, RGBX_8888) | UI fills the panel with nothing cut off |
+| Battery | sysfs battery reader (`/sys/class/power_supply/battery/capacity`) in the binary; fuel gauge and charger-manager modules in the recovery module list | Percentage matches Android; charging mark shows on a charger |
+| Vibrator | stock `vendor.sprd.hardware.vibrator-service` with its VINTF fragment and rc service; the recovery calls `IVibrator/default` | Buttons vibrate |
+| Terminal | `sh` and `bash` present | Terminal opens and runs `ls /data` |
+| OrangeFox: OTA survival | vendor_boot mode in the binary; installer ZIP has `FOX_VENDOR_BOOT_RECOVERY="1"` | After installing a LineageOS ZIP, OrangeFox reflashes itself and is still the recovery after reboot |
+| OrangeFox: themes | accent and style theme files present | Theme and accent changes persist across reboot |
+| SHRP: device flags | `shrp_rec` setting compiled in, `twres/version` present | About shows mblu21, A/B, maintainer; theme toggle works |
+
+OrangeFox on a virtual A/B device always builds as "vanilla": its MIUI block-OTA menu (`OF_SUPPORT_ALL_BLOCK_OTA_UPDATES`) is disabled by OrangeFox itself, so OTA survival here means the reflash after a ROM ZIP install.
+
+The vibrator in this phone (`sc27xx-vibra`) is an input force-feedback device, which the recovery's built-in sysfs paths cannot drive, so the recovery uses the stock AIDL vibrator HAL (`TW_SUPPORT_INPUT_AIDL_HAPTICS`). The battery is read straight from sysfs (`TW_USE_LEGACY_BATTERY_SERVICES`) because the recovery has no health HAL for this phone.
 
 ## Decryption
 
@@ -61,25 +89,26 @@ LineageOS 24 and the stock ROM encrypt `/data` with FBE v2 (`aes-256-xts:aes-256
 | VNDK-33 `libbase` for the storage proxies only (`sprdstorageproxyd` needs `android::base::Trim(std::string const&)`, which the Android 16 `libbase` no longer exports) | `com.android.vndk.v33` | `/vendor/lib64/vndk33-libbase`, first in those services' `LD_LIBRARY_PATH` |
 | VINTF fragments for KeyMint, Gatekeeper, Trusty | `vendor/etc/vintf/manifest` | `/vendor/etc/vintf/manifest` |
 
-`init.recovery.ums9230_6h10.rc` starts them as the ROM does, in this order: when TWRP marks `/data` encrypted it mounts `prodnv` on `/mnt/vendor`, starts the RPMB and prodnv storage proxies, `tee_rpc`, `tsupplicant` and the Trusty service; KeyMint and Gatekeeper start once `tee_rpc` and `tsupplicant` are running; the `/data/vendor` storage proxies start only after the device-encrypted part of `/data` is readable, and stop once all users are decrypted so `/data` can be unmounted.
+`init.recovery.ums9230_6h10.rc` starts them as the ROM does, in this order: when the recovery marks `/data` encrypted it mounts `prodnv` on `/mnt/vendor`, starts the RPMB and prodnv storage proxies, `tee_rpc`, `tsupplicant` and the Trusty service; KeyMint and Gatekeeper start once `tee_rpc` and `tsupplicant` are running; the `/data/vendor` storage proxies start only after the device-encrypted part of `/data` is readable, and stop once all users are decrypted so `/data` can be unmounted.
 
-The recovery reports Android `99.87.36`, security patch `2099-12-31`. KeyMint rejects keys made under a newer patch level than the running system reports; a higher patch level instead makes KeyMint ask for a key upgrade. TWRP and OrangeFox write upgraded key blobs only to `/tmp` (`KeyStorage.cpp` in their vold) and run keystore2 on a copy of its database in `/tmp`, so nothing on the phone is rewritten.
+The recovery reports Android `99.87.36`, security patch `2099-12-31`. KeyMint rejects keys made under a newer patch level than the running system reports; a higher patch level instead makes KeyMint ask for a key upgrade. OrangeFox and SHRP (both on TeamWin vold) write upgraded key blobs only to `/tmp` (`KeyStorage.cpp` in their vold) and run keystore2 on a copy of its database in `/tmp`, so nothing on the phone is rewritten.
 
 Format compatibility with Android 17, checked against the LineageOS 24 sources (`frameworks/base` at `0a8b4cbd4`, `system/vold`, `system/security` at `123cc4a`):
 
 - Lock screen: the phone has no Weaver HAL, so the PIN goes through the Gatekeeper path. In Android 17 that path is unchanged from Android 14: same synthetic password blob versions (V1-V3), same `PasswordData` layout, scrypt parameters, `secdiscardable` transform, protector key alias and `fbe-key` derivation. Only the Weaver path changed, which this phone does not use.
 - vold key storage: same file names and versions, same keystore-wrapped key format; metadata encryption on a single `userdata` device uses the same key directory layout.
-- keystore2 database: Android 17 writes schema version 2. OrangeFox 16 reads version 2 natively. TWRP 14.1 knows version 1, but its upgrade loop only runs upward, keeps the stored version and reads the same tables; it works on a copy in `/tmp`.
+- keystore2 database: Android 17 writes schema version 2. OrangeFox 16 reads version 2 natively. SHRP 12.1 (TeamWin `android-12.1` keystore2) knows version 1, but its upgrade loop only runs upward, keeps the stored version and reads the same tables; it works on a copy in `/tmp`.
+- KeyMint version: the stock HAL serves KeyMint 2; SHRP 12.1 keystore2 speaks KeyMint 1, which a version 2 service still answers (AIDL interfaces stay backward compatible).
 
 What only the phone can prove: that the Unisoc TEE accepts these services in recovery, that `tsupplicant` loads the gatekeeper app from the recovery paths, and that a PIN set on LineageOS 24 unlocks `/data`. This is test item one of the first session with the phone.
 
 ## Things to know before flashing
 
-- **Only one recovery fits.** Lineage Recovery, the stock Meizu recovery, TWRP and OrangeFox all live in `vendor_boot` and replace each other. Flashing one removes the other.
-- **ROM updates overwrite it.** Anything that writes `vendor_boot` (a LineageOS ZIP or OTA, a stock firmware flash) replaces TWRP or OrangeFox with the recovery bundled in that image. A/B updates write the inactive slot, so after such an update the next boot runs the recovery from the new slot. Flash TWRP or OrangeFox again afterwards if you want to keep it.
+- **Only one recovery fits.** Lineage Recovery, the stock Meizu recovery, OrangeFox and SHRP all live in `vendor_boot` and replace each other. Flashing one removes the other.
+- **ROM updates overwrite it.** Anything that writes `vendor_boot` (a LineageOS ZIP or OTA, a stock firmware flash) replaces OrangeFox or SHRP with the recovery bundled in that image. A/B updates write the inactive slot, so after such an update the next boot runs the recovery from the new slot. OrangeFox reflashes itself after it installs a ROM ZIP; after an OTA from Android, or with SHRP, flash the recovery again if you want to keep it.
 - **`/data` decryption is built in but unproven.** See [Decryption](#decryption). Until it is tested on the phone, expect that it may fail; ADB sideload, microSD and USB OTG do not depend on `/data`.
 - **Unlocked bootloader required.** The image is signed with the AOSP test key. The bootloader must be unlocked and `vbmeta` must not enforce verification, exactly as for the LineageOS builds of this phone.
-- **Unverified on hardware:** touch (the `focaltech_spi_v4_1` and `spi_ilitek` modules are loaded from `vendor_dlkm`, with copies in the ramdisk as a fallback), screen height (1600 assumed; the theme scales), brightness range, the USB OTG block device (`/dev/block/sdg1` assumed), MTP and slot switching through the AOSP boot control HAL.
+- **Unverified on hardware:** everything in the phone test column of [Features](#features), and slot switching through the AOSP boot control HAL. Assumed values: screen height 1600, USB OTG block device `/dev/block/sdg1`.
 
 ## Flashing
 
@@ -92,7 +121,7 @@ Keep the full backup of the phone (`vendor_boot_a.bin` from the dump) before you
 2. Reboot to the bootloader (`adb reboot bootloader`) and flash the active slot:
    ```sh
    fastboot getvar current-slot
-   fastboot flash vendor_boot_a mblu21-twrp-...-vendor_boot.img
+   fastboot flash vendor_boot_a mblu21-orangefox-...-vendor_boot.img
    ```
    Use `vendor_boot_b` when the current slot is `b`. Flash both slots to keep the recovery after an A/B update. `fastboot boot` does not work for `vendor_boot` images.
 3. Boot into recovery with `fastboot reboot recovery` or `adb reboot recovery`.
@@ -101,35 +130,34 @@ Keep the full backup of the phone (`vendor_boot_a.bin` from the dump) before you
 
 - **Stock recovery:** flash the stock image from the backup: `fastboot flash vendor_boot_a vendor_boot_a.bin` (and `_b` if you flashed it).
 - **Lineage Recovery:** flash `vendor_boot.img` from the LineageOS build of this phone to the same slot.
-- **From TWRP/OrangeFox itself:** Install, Install Image, pick the image, target `Vendor Boot (recovery)`.
+- **From OrangeFox or SHRP itself:** Install, Install Image, pick the image, target `Vendor Boot (recovery)`.
 
 If the phone no longer boots at all after flashing, flash the stock `vendor_boot_a.bin` from the bootloader; the bootloader itself is not touched by this image.
 
 ## Building
 
-CI does the builds: `.github/workflows/build.yml` runs a matrix of TWRP (`twrp-14.1`) and OrangeFox (`fox_16.0`) on every push to `main` and on manual dispatch, then publishes a pre-release per flavour with the image, its SHA-256 and the check report.
+CI does the builds: `.github/workflows/build.yml` runs a matrix of OrangeFox (`fox_16.0`) and SHRP-Reborn (`shrp-12.1`) on every push to `main` and on manual dispatch, then publishes a pre-release per flavour with the image, its SHA-256 and the check report (OrangeFox also its installer ZIP).
 
-Manifest choice: the newest branch of each project, because decryption has to read data written by Android 17.
+Manifest choice: the newest branch of each project that can build a header v4 `vendor_boot` with decryption.
 
-- TWRP: `twrp-14.1` (Android 14). TeamWin has no newer recovery branch (`android_bootable_recovery` ends at `android-14.1`). Its head (`426b747`) does not build with `TW_INCLUDE_CRYPTO`: libtar links AIDL `-ndk_platform` modules that no longer exist and uses an fscrypt policy API that TeamWin's `android-14.1` vold no longer provides ([minimal-manifest issue 77](https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp/issues/77)). CI applies the open TeamWin Gerrit changes that fix this, stored in `patches/twrp-14.1/bootable/recovery/`: [8742](https://gerrit.twrp.me/c/android_bootable_recovery/+/8742) (ndk suffix), [8744](https://gerrit.twrp.me/c/android_bootable_recovery/+/8744) and [8745](https://gerrit.twrp.me/c/android_bootable_recovery/+/8745) (FDE removal, fscrypt policy API), plus their base commit `07284fb` (`task_profiles.json` dependency). Drop them once TeamWin merges these changes.
 - OrangeFox: `fox_16.0` (Android 16, `android-16.0.0_r1`), the newest OrangeFox manifest and the only one whose keystore2 already uses the Android 17 database version. It builds with `lunch twrp_mblu21-bp2a-eng`.
+- SHRP-Reborn: `shrp-12.1` (Android 12.1, `android-12.1.0_r4`), the only SHRP-Reborn manifest. Its recovery repository also has an `android-14` branch, but there is no manifest, `vendor/shrp`, `vendor/twrp` or `build` branch to build it with. Android 12.1 already supports header v4 `vendor_boot` (vendor bootconfig, ramdisk table) and merging the recovery into the vendor ramdisk, and SHRP uses TeamWin's `android-12.1` vold and keystore2. It builds with `lunch twrp_mblu21-eng`. SHRP's flashable ZIP step only runs for `recoveryimage`/`bootimage`, so SHRP releases contain the `vendor_boot.img` only.
 
-Local build:
+Local build (OrangeFox; for SHRP use `repo init -u https://github.com/SHRP-Reborn/manifest.git -b shrp-12.1`, skip `orangefox_vars.sh`, and `lunch twrp_mblu21-eng`):
 
 ```sh
-repo init --depth=1 -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-14.1
-repo sync -c --no-tags --no-clone-bundle
-git clone https://github.com/tickernelz/android_device_meizu_mblu21-twrp device/meizu/mblu21
+git clone https://gitlab.com/OrangeFox/sync.git && cd sync && ./orangefox_sync.sh --branch 16.0 --path ~/fox16 && cd ~/fox16
+git clone https://github.com/tickernelz/android_device_meizu_mblu21-recovery device/meizu/mblu21
 export ALLOW_MISSING_DEPENDENCIES=true
+source device/meizu/mblu21/orangefox_vars.sh
 source build/envsetup.sh
-lunch twrp_mblu21-ap2a-eng
+lunch twrp_mblu21-bp2a-eng
 mka vendorbootimage
 python3 device/meizu/mblu21/tools/vendor_boot_check.py out/target/product/mblu21/vendor_boot.img \
-  --reference device/meizu/mblu21/prebuilt/stock_vendor_boot.json --flavor twrp \
-  --rom-fstab device/meizu/mblu21/prebuilt/fstab.rom.ums9230_6h10
+  --reference device/meizu/mblu21/prebuilt/stock_vendor_boot.json --flavor orangefox \
+  --rom-fstab device/meizu/mblu21/prebuilt/fstab.rom.ums9230_6h10 \
+  --zip out/target/product/mblu21/OrangeFox-*.zip
 ```
-
-For OrangeFox, sync with `orangefox_sync.sh --branch 16.0`, run `source device/meizu/mblu21/orangefox_vars.sh` before `build/envsetup.sh`, then `lunch twrp_mblu21-bp2a-eng` and `mka vendorbootimage`.
 
 ## Sources
 

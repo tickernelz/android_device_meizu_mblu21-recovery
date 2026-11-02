@@ -5,23 +5,18 @@ src="$WORK/src"
 jobs="$(nproc)"
 
 case "$FLAVOR" in
-  twrp)
-    release=ap2a
-    mkdir -p "$src"
-    cd "$src"
-    repo init --depth=1 --no-repo-verify -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b "$MANIFEST_BRANCH" -g default,-mips,-darwin,-notdefault
-    repo sync -c -j"$jobs" --force-sync --no-clone-bundle --no-tags --optimized-fetch --prune
-    for patch_dir in "$GITHUB_WORKSPACE/tree/patches/$MANIFEST_BRANCH"/*/*/; do
-      project="${patch_dir#"$GITHUB_WORKSPACE/tree/patches/$MANIFEST_BRANCH/"}"
-      echo "applying $(ls "$patch_dir" | wc -l) patches to $project at $(git -C "$project" rev-parse --short HEAD)"
-      git -C "$project" am --3way "$patch_dir"*.patch
-    done
-    ;;
   orangefox)
-    release=bp2a
+    lunch_target=twrp_mblu21-bp2a-eng
     git clone --depth 1 https://gitlab.com/OrangeFox/sync.git "$WORK/fox-sync"
     cd "$WORK/fox-sync"
     ./orangefox_sync.sh --branch "${MANIFEST_BRANCH#fox_}" --path "$src"
+    ;;
+  shrp)
+    lunch_target=twrp_mblu21-eng
+    mkdir -p "$src"
+    cd "$src"
+    repo init --depth=1 --no-repo-verify -u https://github.com/SHRP-Reborn/manifest.git -b "$MANIFEST_BRANCH" -g default,-mips,-darwin,-notdefault
+    repo sync -c -j"$jobs" --force-sync --no-clone-bundle --no-tags --optimized-fetch --prune
     ;;
   *)
     echo "unknown flavor: $FLAVOR" >&2
@@ -54,7 +49,7 @@ if [ "$FLAVOR" = orangefox ]; then
 fi
 set +u
 source build/envsetup.sh
-lunch "twrp_mblu21-${release}-eng"
+lunch "$lunch_target"
 mka vendorbootimage
 set -u
 ls -l out/target/product/mblu21/

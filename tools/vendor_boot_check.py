@@ -17,10 +17,9 @@ HEADER_SIZE = struct.calcsize(HEADER_FORMAT)
 TABLE_ENTRY_FORMAT = "<III32s64s"
 TABLE_ENTRY_SIZE = struct.calcsize(TABLE_ENTRY_FORMAT)
 RECOVERY_MARKERS = {
-    "twrp": ("system/bin/recovery", "twres"),
     "orangefox": ("system/bin/recovery", "twres", "FFiles"),
+    "shrp": ("system/bin/recovery", "twres", "twres/version"),
 }
-
 TEE_EXECUTABLES = (
     "system/bin/android.hardware.security.keymint@2.0-unisoc.service.trusty",
     "system/bin/android.hardware.gatekeeper@1.0-service.trusty",
@@ -46,6 +45,7 @@ RECOVERY_CRYPTO_BINARIES = (
     "system/bin/servicemanager",
     "system/bin/hwservicemanager",
 )
+STOCK_SERVICE_EXECUTABLES = TEE_EXECUTABLES + ("system/bin/vendor.sprd.hardware.vibrator-service",)
 LIBRARY_SEARCH_PATH = ("vendor/lib64", "vendor/lib64/hw", "system/lib64")
 SYSTEM_SEARCH_PATH = ("system/lib64",)
 KEYMINT_START_REQUIRES = ("init.svc.vendor.tee_rpc=running", "init.svc.vendor.tsupplicant=running")
@@ -261,7 +261,7 @@ def rc_services_and_triggers(text):
 
 
 def crypto_checks(by_name, rom_fstab_path, record):
-    required = TEE_EXECUTABLES + TEE_DATA + RECOVERY_CRYPTO_BINARIES
+    required = STOCK_SERVICE_EXECUTABLES + TEE_DATA + RECOVERY_CRYPTO_BINARIES
     absent = [path for path in required if resolve(by_name, path) is None]
     record("tee_stack_files_present", not absent, {"required": len(required), "missing": absent})
     if absent:
@@ -273,7 +273,7 @@ def crypto_checks(by_name, rom_fstab_path, record):
     unresolved = []
     undefined = []
     loaded = set()
-    for root in TEE_EXECUTABLES:
+    for root in STOCK_SERVICE_EXECUTABLES:
         elves, missing = load_set(by_name, root, library_paths.get(root, LIBRARY_SEARCH_PATH))
         unresolved.extend(missing)
         loaded.update(elves)
@@ -281,10 +281,10 @@ def crypto_checks(by_name, rom_fstab_path, record):
         for path, info in elves.items():
             for symbol in sorted(info["undefined"] - available):
                 undefined.append(f"{os.path.basename(root)}: {os.path.basename(path)} needs {symbol}")
-    record("tee_needed_libraries_resolved", not unresolved,
+    record("stock_service_libraries_resolved", not unresolved,
            {"objects_loaded": len(loaded), "service_library_paths": {os.path.basename(k): ":".join(v) for k, v in sorted(library_paths.items())},
             "unresolved": sorted(set(unresolved))[:40]})
-    record("tee_undefined_symbols_resolved", not undefined,
+    record("stock_service_symbols_resolved", not undefined,
            {"unresolved_symbols": len(undefined), "sample": undefined[:40]})
 
     system_unresolved = []
@@ -326,6 +326,114 @@ def crypto_checks(by_name, rom_fstab_path, record):
     record("keymint_version_props_spoofed", seen == SPOOFED_PROPS, seen)
 
 
+FEATURE_PHONE_TESTS = {
+    "decrypt_data": "Boot recovery on LineageOS 24 with a PIN set, enter the PIN, /data/media/0 file names are readable",
+    "mtp": "Connect to a PC, the internal storage appears as an MTP device and a file copies both ways",
+    "adb_sideload": "adb devices lists the phone in recovery; adb sideload of a ZIP completes",
+    "fastbootd": "Reboot to fastbootd from recovery; fastboot getvar is-userspace returns yes",
+    "otg_usb_storage": "A FAT32 USB stick on an OTG adapter mounts as USB OTG",
+    "flash_zip_image": "Flash a ZIP and flash vendor_boot.img through Install Image",
+    "backup_restore": "Back up boot, init_boot, vendor_boot, dtbo, super and metadata, restore boot, phone still boots",
+    "touch": "Touch responds over the whole screen",
+    "brightness": "The brightness slider changes the backlight",
+    "display": "The UI fills the 720x1600 panel with nothing cut off",
+    "battery": "The battery percentage matches Android and the charging mark shows on a charger",
+    "vibrator": "Buttons vibrate",
+    "terminal": "The terminal opens and runs ls /data",
+    "orangefox_ota_survival": "After a LineageOS ZIP install, OrangeFox reflashes itself and is still the recovery after reboot",
+    "orangefox_themes": "Changing accent and theme in settings persists across reboot",
+    "shrp_device_flags": "About shows device mblu21, A/B, maintainer tickernelz; theme toggle works",
+}
+
+
+def contains(by_name, paths, needle):
+    data = needle.encode()
+    for path in paths:
+        entry = resolve(by_name, path)
+        if entry is not None and data in entry["content"]:
+            return True
+    return False
+
+
+def parse_twrp_flags(by_name):
+    entry = resolve(by_name, "system/etc/twrp.flags")
+    flags = {}
+    if entry is None:
+        return flags
+    for line in entry["content"].decode().splitlines():
+        fields = line.split()
+        if len(fields) >= 3 and not line.startswith("#"):
+            flags[fields[0]] = line
+    return flags
+
+
+def rc_text(by_name):
+    texts = []
+    for name in by_name:
+        if name.endswith(".rc") and not is_vendor_path(name):
+            entry = resolve(by_name, name)
+            if entry is not None:
+                texts.append(entry["content"].decode(errors="replace"))
+    return "\n".join(texts)
+
+
+def zip_member(zip_path, name):
+    import zipfile
+    with zipfile.ZipFile(zip_path) as archive:
+        return archive.read(name) if name in archive.namelist() else None
+
+
+def feature_checks(by_name, flavor, zip_path, results, record):
+    recovery = ("system/bin/recovery",)
+    libs = tuple(name for name in by_name if name.startswith("system/lib64/"))
+    flags = parse_twrp_flags(by_name)
+    rc = rc_text(by_name)
+    recovery_modules = set(module_list(list(by_name.values()), "modules.load.recovery"))
+
+    def has(path):
+        return resolve(by_name, path) is not None
+
+    def flag_has(mount, token):
+        return token in flags.get(mount, "")
+
+    crypto_prefixes = ("tee_", "stock_service_", "recovery_keystore", "recovery_fstab", "keymint_version")
+    crypto = {item["check"]: item["ok"] for item in results if item["check"].startswith(crypto_prefixes)}
+    features = {
+        "decrypt_data": (all(crypto.values()) and bool(crypto), {"from_checks": crypto}),
+        "mtp": (contains(by_name, recovery + libs, "/dev/usb-ffs/mtp/ep0") and "functionfs mtp" in rc and "ffs.mtp" in rc,
+                {"ffs_endpoint_in_binary": contains(by_name, recovery + libs, "/dev/usb-ffs/mtp/ep0"), "rc_ffs_mtp": "ffs.mtp" in rc}),
+        "adb_sideload": (has("system/bin/adbd") and contains(by_name, recovery, "sideload"),
+                         {"adbd": has("system/bin/adbd")}),
+        "fastbootd": (has("system/bin/fastbootd") and "service fastbootd" in rc, {"fastbootd": has("system/bin/fastbootd")}),
+        "otg_usb_storage": ("/usb_otg" in flags and {"musb_hdrc.ko", "musb_sprd.ko"} <= recovery_modules,
+                            {"usb_otg_flag": "/usb_otg" in flags, "musb_modules": sorted({"musb_hdrc.ko", "musb_sprd.ko"} & recovery_modules)}),
+        "flash_zip_image": (all(flag_has(m, "flashimg=1") for m in ("/boot", "/init_boot", "/vendor_boot", "/dtbo")) and contains(by_name, recovery, "update-binary"),
+                            {m: flag_has(m, "flashimg=1") for m in ("/boot", "/init_boot", "/vendor_boot", "/dtbo")}),
+        "backup_restore": (all(flag_has(m, "backup=1") for m in ("/boot", "/init_boot", "/vendor_boot", "/dtbo", "/super", "/metadata")),
+                           {m: flag_has(m, "backup=1") for m in ("/boot", "/init_boot", "/vendor_boot", "/dtbo", "/super", "/metadata")}),
+        "touch": (has("vendor/lib/modules/1.1/focaltech_spi_v4_1.ko") and has("vendor/lib/modules/1.1/spi_ilitek.ko") and contains(by_name, recovery, "focaltech_spi_v4_1.ko"),
+                  {"modules_in_ramdisk": has("vendor/lib/modules/1.1/spi_ilitek.ko"), "load_list_in_binary": contains(by_name, recovery, "spi_ilitek.ko")}),
+        "brightness": (contains(by_name, recovery, "/sys/class/backlight/sprd_backlight/brightness"), {}),
+        "display": (has("twres/ui.xml"), {}),
+        "battery": (contains(by_name, recovery, "/sys/class/power_supply/battery/capacity") and {"sc27xx_fuel_gauge.ko", "sprd-charger-manager.ko"} <= recovery_modules,
+                    {"sysfs_reader_in_binary": contains(by_name, recovery, "/sys/class/power_supply/battery/capacity")}),
+        "vibrator": (has("system/bin/vendor.sprd.hardware.vibrator-service") and has("vendor/etc/vintf/manifest/vibrator.xml")
+                     and "vendor.sprd.hardware.vibrator-service" in rc and contains(by_name, recovery, "IVibrator/default")
+                     and "sc27xx-vibra.ko" in recovery_modules,
+                     {"aidl_instance_in_binary": contains(by_name, recovery, "IVibrator/default")}),
+        "terminal": (has("system/bin/sh") and (has("sbin/bash") or has("system/bin/bash")), {"bash": has("sbin/bash") or has("system/bin/bash")}),
+    }
+    if flavor == "orangefox":
+        binary = zip_member(zip_path, "META-INF/com/google/android/update-binary") if zip_path else None
+        features["orangefox_ota_survival"] = (
+            contains(by_name, recovery, "orangefox.vendor_boot.recovery") and binary is not None and b'FOX_VENDOR_BOOT_RECOVERY="1"' in binary,
+            {"vendor_boot_mode_in_binary": contains(by_name, recovery, "orangefox.vendor_boot.recovery"), "installer_zip_vendor_boot": binary is not None and b'FOX_VENDOR_BOOT_RECOVERY="1"' in binary})
+        features["orangefox_themes"] = (has("twres/themes/accent.xml") and has("twres/themes/style.xml"), {})
+    if flavor == "shrp":
+        features["shrp_device_flags"] = (contains(by_name, recovery, "shrp_rec") and has("twres/version"), {})
+    for name, (ok, detail) in features.items():
+        record(f"feature_{name}", ok, dict(detail, phone_test=FEATURE_PHONE_TESTS[name]))
+
 def emit_reference(image_path, out_path):
     image = read_image(image_path)
     _, entries = ramdisk_view(image)
@@ -341,7 +449,7 @@ def emit_reference(image_path, out_path):
     print(f"reference: {len(vendor)} vendor entries written to {out_path}")
 
 
-def check(image_path, reference_path, flavor, report_path, rom_fstab_path=None):
+def check(image_path, reference_path, flavor, report_path, rom_fstab_path=None, zip_path=None):
     with open(reference_path) as handle:
         reference = json.load(handle)
     image = read_image(image_path)
@@ -395,6 +503,7 @@ def check(image_path, reference_path, flavor, report_path, rom_fstab_path=None):
 
     if rom_fstab_path:
         crypto_checks(by_name, rom_fstab_path, record)
+        feature_checks(by_name, flavor, zip_path, results, record)
 
     summary = {
         "image": os.path.basename(image_path),
@@ -421,14 +530,15 @@ def main():
     parser.add_argument("image")
     parser.add_argument("--reference", required=True)
     parser.add_argument("--emit-reference", action="store_true")
-    parser.add_argument("--flavor", choices=sorted(RECOVERY_MARKERS), default="twrp")
+    parser.add_argument("--flavor", choices=sorted(RECOVERY_MARKERS), required=True)
+    parser.add_argument("--zip", help="flashable installer ZIP produced next to the image, checked when given")
     parser.add_argument("--report")
     parser.add_argument("--rom-fstab", help="ROM fstab whose /data and /metadata encryption options the recovery must match")
     args = parser.parse_args()
     if args.emit_reference:
         emit_reference(args.image, args.reference)
         return 0
-    return check(args.image, args.reference, args.flavor, args.report, args.rom_fstab)
+    return check(args.image, args.reference, args.flavor, args.report, args.rom_fstab, args.zip)
 
 
 if __name__ == "__main__":

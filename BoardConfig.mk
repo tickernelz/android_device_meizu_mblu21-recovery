@@ -118,17 +118,6 @@ PLATFORM_SECURITY_PATCH := 2099-12-31
 VENDOR_SECURITY_PATCH := $(PLATFORM_SECURITY_PATCH)
 
 TW_INCLUDE_CRYPTO := true
-ifeq ($(wildcard bootable/recovery/orangefox.mk),)
-TW_RECOVERY_ADDITIONAL_RELINK_BINARY_FILES += $(TARGET_OUT_SYSTEM_EXT_EXECUTABLES)/hwservicemanager
-MBLU21_KEYSTORE2_LIBS := \
-    android.hardware.confirmationui-V1-ndk \
-    android.hardware.security.keymint-V3-ndk \
-    android.hardware.security.rkp-V3-ndk \
-    android.security.aaid_aidl-cpp \
-    android.system.keystore2-V4-ndk
-TARGET_RECOVERY_DEVICE_MODULES += $(MBLU21_KEYSTORE2_LIBS)
-TW_RECOVERY_ADDITIONAL_RELINK_LIBRARY_FILES += $(addprefix $(TARGET_OUT_SHARED_LIBRARIES)/,$(addsuffix .so,$(MBLU21_KEYSTORE2_LIBS)))
-endif
 TW_INCLUDE_FBE_METADATA_DECRYPT := true
 TW_USE_FSCRYPT_POLICY := 2
 
@@ -158,7 +147,26 @@ TW_INCLUDE_RESETPROP := true
 TW_INCLUDE_LIBRESETPROP := true
 TW_BACKUP_EXCLUSIONS := /data/fonts
 TW_DEVICE_VERSION := mblu21-UNTESTED
+TW_USE_LEGACY_BATTERY_SERVICES := true
+TW_SUPPORT_INPUT_AIDL_HAPTICS := true
+TW_SUPPORT_INPUT_AIDL_HAPTICS_FQNAME := IVibrator/default
 
 TW_LOAD_VENDOR_MODULES := "focaltech_spi_v4_1.ko spi_ilitek.ko"
 TW_LOAD_VENDOR_BOOT_MODULES := true
 TW_LOAD_VENDOR_MODULES_EXCLUDE_GKI := true
+
+ifneq ($(wildcard vendor/shrp),)
+SHRP_DEVICE_CODE := mblu21
+SHRP_PATH := $(DEVICE_PATH)
+SHRP_MAINTAINER := tickernelz
+SHRP_REC_TYPE := Treble
+SHRP_DEVICE_TYPE := A/B
+SHRP_REC := /dev/block/by-name/vendor_boot
+SHRP_AB := true
+SHRP_EDL_MODE := 0
+SHRP_INTERNAL := /sdcard
+SHRP_EXTERNAL := /external_sd
+SHRP_OTG := /usb_otg
+SHRP_FLASH := 0
+SHRP_DARK := true
+endif

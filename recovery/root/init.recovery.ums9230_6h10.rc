@@ -114,3 +114,13 @@ service mblu21.data-vendor-wait /system/bin/mblu21-data-vendor-wait.sh
     disabled
     oneshot
     seclabel u:r:recovery:s0
+
+on property:servicemanager.ready=true
+    start vendor.vibrator
+
+service vendor.vibrator /system/bin/vendor.sprd.hardware.vibrator-service
+    user system
+    group system input
+    setenv LD_LIBRARY_PATH /vendor/lib64:/vendor/lib64/hw:/system/lib64
+    disabled
+    seclabel u:r:recovery:s0

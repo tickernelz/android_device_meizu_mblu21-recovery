@@ -27,10 +27,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - flavor: twrp
-            manifest: twrp-14.1
           - flavor: orangefox
             manifest: fox_16.0
+          - flavor: shrp
+            manifest: shrp-12.1
     env:
       FLAVOR: ${{ matrix.flavor }}
       MANIFEST_BRANCH: ${{ matrix.manifest }}
@@ -93,6 +93,7 @@ jobs:
             --reference tree/prebuilt/stock_vendor_boot.json \
             --flavor "$FLAVOR" \
             --rom-fstab tree/prebuilt/fstab.rom.ums9230_6h10 \
+            $(ls "$WORK"/src/out/target/product/mblu21/OrangeFox*.zip 2>/dev/null | sed 's/^/--zip /') \
             --report dist/validation.json | tee dist/validation.txt
 
       - name: Package
