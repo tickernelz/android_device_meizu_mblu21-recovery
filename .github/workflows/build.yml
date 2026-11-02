@@ -85,6 +85,17 @@ jobs:
       - name: Sync and build
         run: tree/.github/scripts/build.sh
 
+      - name: Reseal with the stock Meizu AVB blob
+        run: |
+          img="$WORK/src/out/target/product/mblu21/vendor_boot.img"
+          mkdir -p dist
+          python3 tree/tools/reseal_stock_avb.py \
+            --image "$img" \
+            --stock-vbmeta tree/prebuilt/vendor_boot.avb.vbmeta \
+            --output "$img.resealed" \
+            --report dist/avb-reseal.txt | tee -a dist/validation.txt
+          mv "$img.resealed" "$img"
+
       - name: Validate against stock vendor_boot
         id: validate
         run: |

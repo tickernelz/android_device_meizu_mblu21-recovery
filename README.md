@@ -115,23 +115,48 @@ What only the phone can prove: that the Unisoc TEE accepts these services in rec
 
 Keep the full backup of the phone (`vendor_boot_a.bin` from the dump) before you start.
 
+> **Read this first: the bootloader only boots a vendor_boot carrying the Meizu AVB blob.**
+> `fastboot flash` and `fastboot boot` both fail on this phone (`Status read failed`), and a
+> `vendor_boot` whose embedded vbmeta is signed with a test key stops at the Meizu logo on
+> unlock check, with or without `fastboot --disable-verification`.
+> Releases from r20 on are resealed in CI with the stock blob
+> (`prebuilt/vendor_boot.avb.vbmeta`, sha256 `06daaf6e...`, key `4fce36c7...`, rollback index
+> `1790812800`) by `tools/reseal_stock_avb.py`; the ramdisk itself stays as built.
+> Evidence and every attempt: [`docs/AVB-FINDINGS.md`](docs/AVB-FINDINGS.md).
+
+Write the image in Unisoc download mode, the only path that writes reliably here:
+
+```sh
+# phone off -> hold Volume Up -> plug USB, keep holding until the port appears
+lsusb | grep 1782:4d00
+cd ~/re/mblu21/tools/linux
+./spd_dump --wait 600 exec_addr 0x65015f08 fdl fdl1-dl.bin 0x65000800 \
+    fdl fdl2-dl.bin 0x9efffe00 exec w vendor_boot_a /path/to/mblu21-...-vendor_boot.img reset
+```
+
+With root (`adb root` or `su -c`) the same write is a plain `dd` and needs no buttons:
+
+```sh
+adb push mblu21-...-vendor_boot.img /data/local/tmp/vb.img
+adb shell su -c "dd if=/data/local/tmp/vb.img of=/dev/block/by-name/vendor_boot_a bs=1048576"
+printf 'boot-recovery' > /dev/block/by-name/misc   # or: adb reboot recovery
+```
+
 1. Download `...-vendor_boot.img` and its `.sha256` from a release and check it:
    ```sh
    sha256sum -c mblu21-*-vendor_boot.img.sha256
    ```
-2. Reboot to the bootloader (`adb reboot bootloader`) and flash the active slot:
-   ```sh
-   fastboot getvar current-slot
-   fastboot flash vendor_boot_a mblu21-orangefox-...-vendor_boot.img
-   ```
-   Use `vendor_boot_b` when the current slot is `b`. Flash both slots to keep the recovery after an A/B update. `fastboot boot` does not work for `vendor_boot` images.
-3. Boot into recovery with `fastboot reboot recovery` or `adb reboot recovery`.
+2. Write it with `spd_dump` (download mode) or `dd` (root), as shown above; write
+   `vendor_boot_b` as well when you want the recovery after an A/B update.
+3. Point the boot-control block at recovery (`printf 'boot-recovery' > /dev/block/by-name/misc`)
+   or run `adb reboot recovery`, then start the phone with the power button.
+   `fastboot reboot recovery` only works when `fastboot flash` already works, which it does not here.
 
 OrangeFox releases also carry an installer ZIP. Installed from OrangeFox (or another recovery), it writes its `recovery.img` to **both** `vendor_boot_a` and `vendor_boot_b`; CI checks that this `recovery.img` is byte-identical to the released `vendor_boot.img`. Of the helper scripts inside the ZIP only `flash-whole-image.sh`/`.bat` work on this phone: `flash-ramdisk.*` expect a separate recovery ramdisk fragment, which this single-fragment layout does not have. OrangeFox ZIPs from releases r4, r7, r8 and r11 cannot install (they were built in ramdisk mode and abort before writing anything); use their `vendor_boot.img` instead.
 
 ## Going back
 
-- **Stock recovery:** flash the stock image from the backup: `fastboot flash vendor_boot_a vendor_boot_a.bin` (and `_b` if you flashed it).
+- **Stock recovery:** write `vendor_boot_a.bin` from the backup back to `vendor_boot_a` in download mode (or with `dd` as root), then clear `misc` with `misc.bin` from the same backup.
 - **Lineage Recovery:** flash `vendor_boot.img` from the LineageOS build of this phone to the same slot.
 - **From OrangeFox or SHRP itself:** Install, Install Image, pick the image, target `Vendor Boot (recovery)`.
 
