@@ -1,0 +1,34 @@
+From f2929d0fab9c054dd6b1d1cb0b757afc803a7601 Mon Sep 17 00:00:00 2001
+From: Zhafron <zhafronadani@gmail.com>
+Date: Tue, 3 Nov 2026 10:06:51 +0700
+Subject: [PATCH 2/2] minuitwrp: keep a draw surface when a page flip is refused
+
+sprd_drm answers drmModePageFlip with EBUSY while the previous flip is still pending. drm_flip returned NULL, gr_flip then read gr_draw->data at offset 0x10 and the recovery died with SIGSEGV fault addr 0x10, for example right after a decrypt command redraws the GUI. Fall back to a synchronous drmModeSetCrtc and always return the draw buffer.
+---
+ minuitwrp/graphics_drm.cpp | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/minuitwrp/graphics_drm.cpp b/minuitwrp/graphics_drm.cpp
+index 2b94dda..96a31f9 100644
+--- a/minuitwrp/graphics_drm.cpp
++++ b/minuitwrp/graphics_drm.cpp
+@@ -489,8 +489,14 @@ static GRSurface* drm_flip(minui_backend* backend __unused) {
+     ret = drmModePageFlip(drm_fd, main_monitor_crtc->crtc_id,
+                           drm_surfaces[current_buffer]->fb_id, 0, NULL);
+     if (ret < 0) {
+-        printf("drmModePageFlip failed ret=%d\n", ret);
+-        return NULL;
++        ret = drmModeSetCrtc(drm_fd, main_monitor_crtc->crtc_id,
++                             drm_surfaces[current_buffer]->fb_id, 0, 0,
++                             &main_monitor_connector->connector_id, 1,
++                             &main_monitor_crtc->mode);
++        if (ret < 0) {
++            printf("drm flip failed ret=%d\n", ret);
++            return draw_buf;
++        }
+     }
+     current_buffer = 1 - current_buffer;
+     return draw_buf;
+-- 
+2.56.0
+

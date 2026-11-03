@@ -89,6 +89,8 @@ LineageOS 24 and the stock ROM encrypt `/data` with FBE v2 (`aes-256-xts:aes-256
 | 12 vendor libraries, 8 VNDK-33 libraries the stack links against that the recovery does not ship | `vendor/lib64`, `com.android.vndk.v33` | `/vendor/lib64` |
 | VNDK-33 `libbase` for the storage proxies only (`sprdstorageproxyd` needs `android::base::Trim(std::string const&)`, which the Android 16 `libbase` no longer exports) | `com.android.vndk.v33` | `/vendor/lib64/vndk33-libbase`, first in those services' `LD_LIBRARY_PATH` |
 | VINTF fragments for KeyMint, Gatekeeper, Trusty | `vendor/etc/vintf/manifest` | `/vendor/etc/vintf/manifest` |
+| Empty base device manifest, and a framework manifest declaring `android.hidl.manager` | — | `/vendor/etc/vintf/manifest.xml`, `/system/etc/vintf/manifest.xml` |
+| `/dev/trusty-ipc-dev0` and `/dev/tshm` owned by `system`, mode 0660 | `vendor/etc/ueventd.rc` | `/vendor/etc/ueventd.rc` |
 
 `init.recovery.ums9230_6h10.rc` starts them as the ROM does, in this order: when the recovery marks `/data` encrypted it mounts `prodnv` on `/mnt/vendor`, starts the RPMB and prodnv storage proxies, `tee_rpc`, `tsupplicant` and the Trusty service; KeyMint and Gatekeeper start once `tee_rpc` and `tsupplicant` are running; the `/data/vendor` storage proxies start only after the device-encrypted part of `/data` is readable, and stop once all users are decrypted so `/data` can be unmounted.
 
@@ -101,13 +103,15 @@ Format compatibility with Android 17, checked against the LineageOS 24 sources (
 - keystore2 database: Android 17 writes schema version 2. OrangeFox 16 reads version 2 natively. SHRP 12.1 (TeamWin `android-12.1` keystore2) knows version 1, but its upgrade loop only runs upward, keeps the stored version and reads the same tables; it works on a copy in `/tmp`.
 - KeyMint version: the stock HAL serves KeyMint 2; SHRP 12.1 keystore2 speaks KeyMint 1, which a version 2 service still answers (AIDL interfaces stay backward compatible).
 
-What only the phone can prove: that the Unisoc TEE accepts these services in recovery, that `tsupplicant` loads the gatekeeper app from the recovery paths, and that a PIN set on LineageOS 24 unlocks `/data`. This is test item one of the first session with the phone.
+Each of the last two rows was found on the phone. libvintf ignores the fragments when no base `manifest.xml` exists, so servicemanager refuses KeyMint and Trusty and keystore2 panics on registration. Without `android.hidl.manager` in the framework manifest hwservicemanager stops itself and the HIDL gatekeeper cannot register, which shows as `failed to get gatekeeper service` on a PIN attempt. Android's ueventd no longer parses `/ueventd.<hardware>.rc`, so the device rules live in `/vendor/etc/ueventd.rc`; otherwise `/dev/trusty-ipc-dev0` stays root-only and `tee_rpc` exits with status 8.
+
+OrangeFox on LineageOS 24 with a PIN set unlocked `/data` on the phone on 2026-11-03: `Data successfully decrypted`, `/data/media/0` file names readable.
 
 ## Things to know before flashing
 
 - **Only one recovery fits.** Lineage Recovery, the stock Meizu recovery, OrangeFox and SHRP all live in `vendor_boot` and replace each other. Flashing one removes the other.
 - **ROM updates overwrite it.** Anything that writes `vendor_boot` (a LineageOS ZIP or OTA, a stock firmware flash) replaces OrangeFox or SHRP with the recovery bundled in that image. A/B updates write the inactive slot, so after such an update the next boot runs the recovery from the new slot. OrangeFox reflashes itself after it installs a ROM ZIP; after an OTA from Android, or with SHRP, flash the recovery again if you want to keep it.
-- **`/data` decryption is built in but unproven.** See [Decryption](#decryption). Until it is tested on the phone, expect that it may fail; ADB sideload, microSD and USB OTG do not depend on `/data`.
+- **`/data` decryption is proven for OrangeFox only.** See [Decryption](#decryption). SHRP has not been tested on the phone; ADB sideload, microSD and USB OTG do not depend on `/data`.
 - **Unlocked bootloader required.** The image is signed with the AOSP test key. The bootloader must be unlocked and `vbmeta` must not enforce verification, exactly as for the LineageOS builds of this phone.
 - **Unverified on hardware:** everything in the phone test column of [Features](#features), and slot switching through the AOSP boot control HAL. Assumed values: screen height 1600, USB OTG block device `/dev/block/sdg1`.
 
@@ -198,7 +202,7 @@ python3 device/meizu/mblu21/tools/vendor_boot_check.py out/target/product/mblu21
 
 ## Sources
 
-- Stock files in `prebuilt/` and `recovery/root/` (`ueventd.ums9230_6h10.rc`, touch modules) come from the M416H firmware. They belong to Meizu and Unisoc and are included only so the device keeps booting with this image.
+- Stock files in `prebuilt/` and `recovery/root/` (`vendor/etc/ueventd.rc`, touch modules) come from the M416H firmware. They belong to Meizu and Unisoc and are included only so the device keeps booting with this image.
 - LineageOS device tree: [tickernelz/android_device_meizu_mblu21](https://github.com/tickernelz/android_device_meizu_mblu21).
 
 Licensed under Apache-2.0, except the stock firmware files listed above.

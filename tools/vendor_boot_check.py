@@ -41,6 +41,9 @@ TEE_DATA = (
     "vendor/etc/vintf/manifest/android.hardware.security.keymint@2.0-unisoc.service.trusty.xml",
     "vendor/etc/vintf/manifest/android.hardware.gatekeeper@1.0-service.trusty.xml",
     "vendor/etc/vintf/manifest/trusty-default.xml",
+    "vendor/etc/vintf/manifest.xml",
+    "system/etc/vintf/manifest.xml",
+    "system/etc/task_profiles.json",
 )
 RECOVERY_CRYPTO_BINARIES = (
     "system/bin/keystore2",
@@ -526,6 +529,16 @@ def check(image_path, reference_path, flavor, report_path, rom_fstab_path=None, 
     missing = sorted(set(stock_vendor) - set(built_vendor))
     extra = sorted(set(built_vendor) - set(stock_vendor))
     changed = sorted(name for name in set(stock_vendor) & set(built_vendor) if stock_vendor[name] != built_vendor[name])
+    first_stage_fstab = by_name.get("first_stage_ramdisk/fstab.ums9230_6h10", {}).get("content", b"").decode(errors="replace")
+    record("first_stage_fstab_without_avb", first_stage_fstab and "avb=" not in first_stage_fstab and "avb_keys=" not in first_stage_fstab,
+           [line for line in first_stage_fstab.splitlines() if "avb" in line][:4])
+    ueventd = by_name.get("vendor/etc/ueventd.rc", {}).get("content", b"").decode(errors="replace")
+    record("trusty_ipc_device_owned_by_system",
+           any(line.split()[:4] == ["/dev/trusty-ipc-dev0", "0660", "system", "system"] for line in ueventd.splitlines()),
+           "vendor/etc/ueventd.rc")
+    framework_manifest = by_name.get("system/etc/vintf/manifest.xml", {}).get("content", b"").decode(errors="replace")
+    record("hwservicemanager_declared_for_hidl_gatekeeper", "<name>android.hidl.manager</name>" in framework_manifest,
+           "system/etc/vintf/manifest.xml")
     record("stock_vendor_ramdisk_intact", not (missing or extra or changed),
            {"stock_entries": len(stock_vendor), "built_entries": len(built_vendor),
             "missing": missing[:20], "extra": extra[:20], "changed": changed[:20]})
