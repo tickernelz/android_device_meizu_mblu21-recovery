@@ -15,7 +15,7 @@ Recovery device tree for the Meizu mBlu 21, model M416H. One tree builds OrangeF
 
 | Recovery | Tested on the phone |
 |---|---|
-| OrangeFox `fox_16.0`, built locally from branch `fix/fox-legacy-drm` at `b3dbb0c`, resealed with the stock Meizu AVB blob | 2026-11-03, one M416H on LineageOS 24.0: the UI shows and responds to touch, a PIN set on LineageOS unlocks `/data` (`Data successfully decrypted`, `/data/media/0` file names readable), `adb` sees the phone in recovery, and Android still boots normally with the same `vendor_boot`. |
+| OrangeFox `fox_16.0`, clean local build of `c553a7a` (release [`orangefox-20261103-c553a7ac65d4-local`](https://github.com/tickernelz/android_device_meizu_mblu21-recovery/releases/tag/orangefox-20261103-c553a7ac65d4-local), `vendor_boot` sha256 `384b7863…`), resealed with the stock Meizu AVB blob | 2026-11-03, one M416H on LineageOS 24.0: the UI shows and responds to touch, a PIN set on LineageOS unlocks `/data` (`Data successfully decrypted`, `/data/media/0` file names readable), `adb` stays connected in recovery before and after decryption, and Android still boots normally with the same `vendor_boot` (`boot_completed` at 31.8 s uptime, 33.2 s with the LineageOS `vendor_boot`). |
 | OrangeFox releases published so far, all built before `fix/fox-legacy-drm` | not tested; without that branch OrangeFox crash-loops on the boot logo |
 | SHRP-Reborn `shrp-12.1`, every release | not tested |
 
