@@ -70,8 +70,8 @@
     "first_stage_ramdisk/fstab.ums9230_6h10": {
       "gid": 0,
       "mode": "0o100644",
-      "sha256": "2c39eaf6523050a7b5285afe4eabde5574d4190e519661a16b5066c509adcada",
-      "size": 834,
+      "sha256": "efef71e3305a94fff71bde0f70725051e5ab8cc5c17e048beecbe89ba68fdc44",
+      "size": 1128,
       "uid": 0
     },
     "first_stage_ramdisk/fstab.ums9230_6h10_go": {

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare a vendor_boot v4 image against the stock reference recorded from the M416H dump."""
+"""Compare a vendor_boot v4 image against the stock reference recorded from the M416H dump, except the first-stage fstab, which drops avb flags."""
 
 import argparse
 import hashlib
@@ -14,6 +14,7 @@ import sys
 from elfinfo import parse as parse_elf
 
 VENDOR_PREFIXES = ("first_stage_ramdisk", "lib/modules")
+INTENDED_VENDOR_CHANGES = {"first_stage_ramdisk/fstab.ums9230_6h10"}
 HEADER_FORMAT = "<8sIIIII2048sI16sIIQIIII"
 HEADER_SIZE = struct.calcsize(HEADER_FORMAT)
 TABLE_ENTRY_FORMAT = "<III32s64s"
@@ -529,6 +530,8 @@ def check(image_path, reference_path, flavor, report_path, rom_fstab_path=None, 
     missing = sorted(set(stock_vendor) - set(built_vendor))
     extra = sorted(set(built_vendor) - set(stock_vendor))
     changed = sorted(name for name in set(stock_vendor) & set(built_vendor) if stock_vendor[name] != built_vendor[name])
+    intended = [name for name in changed if name in INTENDED_VENDOR_CHANGES]
+    changed = [name for name in changed if name not in INTENDED_VENDOR_CHANGES]
     first_stage_fstab = by_name.get("first_stage_ramdisk/fstab.ums9230_6h10", {}).get("content", b"").decode(errors="replace")
     record("first_stage_fstab_without_avb", first_stage_fstab and "avb=" not in first_stage_fstab and "avb_keys=" not in first_stage_fstab,
            [line for line in first_stage_fstab.splitlines() if "avb" in line][:4])
@@ -541,7 +544,7 @@ def check(image_path, reference_path, flavor, report_path, rom_fstab_path=None, 
            "system/etc/vintf/manifest.xml")
     record("stock_vendor_ramdisk_intact", not (missing or extra or changed),
            {"stock_entries": len(stock_vendor), "built_entries": len(built_vendor),
-            "missing": missing[:20], "extra": extra[:20], "changed": changed[:20]})
+            "missing": missing[:20], "extra": extra[:20], "changed": changed[:20], "intended_changes": intended})
 
     modules_load = len(module_list(entries, "modules.load"))
     modules_recovery = len(module_list(entries, "modules.load.recovery"))

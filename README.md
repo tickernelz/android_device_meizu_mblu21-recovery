@@ -20,11 +20,11 @@ The phone has no `recovery` partition. The stock recovery sits inside the `vendo
 This tree reproduces that layout:
 
 - `BOARD_MOVE_RECOVERY_RESOURCES_TO_VENDOR_BOOT := true` without `BOARD_INCLUDE_RECOVERY_RAMDISK_IN_VENDOR_BOOT`, so the build merges the recovery into the one vendor ramdisk fragment instead of adding a separate `recovery` fragment the Unisoc bootloader has never been shown to load.
-- `prebuilt/vendor_ramdisk/` holds the stock `first_stage_ramdisk/` and `lib/modules/` taken from the dumped `vendor_boot_a`; the `mblu21_stock_vendor_ramdisk` module copies them into the vendor ramdisk unchanged.
+- `prebuilt/vendor_ramdisk/` holds the stock `first_stage_ramdisk/` and `lib/modules/` taken from the dumped `vendor_boot_a`; the `mblu21_stock_vendor_ramdisk` module copies them into the vendor ramdisk unchanged, except `first_stage_ramdisk/fstab.ums9230_6h10`, which drops the `avb=` and `avb_keys=` flags like the LineageOS `vendor_boot` does: the stock entries point at GSI keys that are not on the phone, and first-stage init then reboots to the bootloader.
 - `prebuilt/dtb/stock.dtb`, the vendor command line, bootconfig and load addresses are the stock values.
 - The image carries an AVB hash footer signed with the public AOSP test key, rollback index location 18 like stock.
 
-Because normal boot uses the same image, anything that differs from stock outside the recovery part would affect normal boot. CI therefore checks every build against `prebuilt/stock_vendor_boot.json`, recorded from the stock dump with `tools/vendor_boot_check.py --emit-reference`:
+Because normal boot uses the same image, anything that differs from stock outside the recovery part would affect normal boot. CI therefore checks every build against `prebuilt/stock_vendor_boot.json`, recorded from the stock dump with `tools/vendor_boot_check.py --emit-reference`; the one intended change, the first-stage fstab, is listed separately in the check output and guarded by `first_stage_fstab_without_avb`:
 
 | Check | Required |
 |---|---|
@@ -109,6 +109,7 @@ OrangeFox on LineageOS 24 with a PIN set unlocked `/data` on the phone on 2026-1
 
 ## Things to know before flashing
 
+- **Normal boot mounts the system partitions without AVB checks.** The first-stage fstab in this image has no `avb=` flags, the same as the LineageOS `vendor_boot`, so it needs the unlocked bootloader and non-enforcing `vbmeta` below.
 - **Only one recovery fits.** Lineage Recovery, the stock Meizu recovery, OrangeFox and SHRP all live in `vendor_boot` and replace each other. Flashing one removes the other.
 - **ROM updates overwrite it.** Anything that writes `vendor_boot` (a LineageOS ZIP or OTA, a stock firmware flash) replaces OrangeFox or SHRP with the recovery bundled in that image. A/B updates write the inactive slot, so after such an update the next boot runs the recovery from the new slot. OrangeFox reflashes itself after it installs a ROM ZIP; after an OTA from Android, or with SHRP, flash the recovery again if you want to keep it.
 - **`/data` decryption is proven for OrangeFox only.** See [Decryption](#decryption). SHRP has not been tested on the phone; ADB sideload, microSD and USB OTG do not depend on `/data`.
@@ -202,7 +203,7 @@ python3 device/meizu/mblu21/tools/vendor_boot_check.py out/target/product/mblu21
 
 ## Sources
 
-- Stock files in `prebuilt/` and `recovery/root/` (`vendor/etc/ueventd.rc`, touch modules) come from the M416H firmware. They belong to Meizu and Unisoc and are included only so the device keeps booting with this image.
+- Stock files in `prebuilt/` and `recovery/root/` (`vendor/etc/ueventd.rc`, touch modules) come from the M416H firmware; `first_stage_ramdisk/fstab.ums9230_6h10` is the stock file without its `avb=`/`avb_keys=` flags. They belong to Meizu and Unisoc and are included only so the device keeps booting with this image.
 - LineageOS device tree: [tickernelz/android_device_meizu_mblu21](https://github.com/tickernelz/android_device_meizu_mblu21).
 
 Licensed under Apache-2.0, except the stock firmware files listed above.
