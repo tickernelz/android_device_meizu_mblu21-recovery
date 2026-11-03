@@ -95,6 +95,10 @@ jobs:
             --output "$img.resealed" \
             --report dist/avb-reseal.txt | tee -a dist/validation.txt
           mv "$img.resealed" "$img"
+          for zip in "$WORK"/src/out/target/product/mblu21/OrangeFox*.zip; do
+            [ -f "$zip" ] || continue
+            tree/.github/scripts/reseal_fox_zip.sh "$zip" "$img" "$WORK/src/vendor/recovery/signature/zipsigner-3.0.jar"
+          done
 
       - name: Validate against stock vendor_boot
         id: validate
