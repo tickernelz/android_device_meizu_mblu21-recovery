@@ -539,6 +539,10 @@ def check(image_path, reference_path, flavor, report_path, rom_fstab_path=None, 
     record("trusty_ipc_device_owned_by_system",
            any(line.split()[:4] == ["/dev/trusty-ipc-dev0", "0660", "system", "system"] for line in ueventd.splitlines()),
            "vendor/etc/ueventd.rc")
+    device_rc = by_name.get("init.recovery.ums9230_6h10.rc", {}).get("content", b"").decode(errors="replace")
+    record("adbd_restarted_for_mtp_adb",
+           "on property:sys.usb.config=mtp,adb && property:sys.usb.configfs=1\n    start adbd" in device_rc,
+           "init.recovery.ums9230_6h10.rc")
     framework_manifest = by_name.get("system/etc/vintf/manifest.xml", {}).get("content", b"").decode(errors="replace")
     record("hwservicemanager_declared_for_hidl_gatekeeper", "<name>android.hidl.manager</name>" in framework_manifest,
            "system/etc/vintf/manifest.xml")
