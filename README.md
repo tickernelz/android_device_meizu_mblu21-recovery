@@ -179,11 +179,12 @@ Local build for SHRP: needs `python2.7` on `PATH` (`.github/scripts/python2.sh` 
 git -C system/core am device/meizu/mblu21/patches/shrp-12.1/system/core/*.patch
 ```
 
-Then skip `orangefox_vars.sh` and `lunch twrp_mblu21-eng`. Local build for OrangeFox:
+Then skip `orangefox_vars.sh` and `lunch twrp_mblu21-eng`. Local build for OrangeFox also applies its local patch: `fox_16.0` minuitwrp ships the atomic DRM backend written for Qualcomm SDE, which returns no surface on Unisoc `sprd_drm`, so without the patch the recovery crash-loops on the boot logo:
 
 ```sh
 git clone https://gitlab.com/OrangeFox/sync.git && cd sync && ./orangefox_sync.sh --branch 16.0 --path ~/fox16 && cd ~/fox16
 git clone https://github.com/tickernelz/android_device_meizu_mblu21-recovery device/meizu/mblu21
+git -C bootable/recovery am ../../device/meizu/mblu21/patches/fox_16.0/bootable/recovery/*.patch
 export ALLOW_MISSING_DEPENDENCIES=true
 source device/meizu/mblu21/orangefox_vars.sh
 source build/envsetup.sh

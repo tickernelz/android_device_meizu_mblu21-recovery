@@ -21,11 +21,6 @@ case "$FLAVOR" in
     repo init --depth=1 -u https://github.com/SHRP-Reborn/manifest.git -b "$MANIFEST_BRANCH" -g default,-mips,-darwin,-notdefault
     repo sync -c -j"$jobs" --force-sync --no-clone-bundle --no-tags --optimized-fetch --prune
     repo manifest -r -o "$WORK/manifest-pinned.xml"
-    for patch_dir in "$GITHUB_WORKSPACE/tree/patches/$MANIFEST_BRANCH"/*/*/; do
-      project="${patch_dir#"$GITHUB_WORKSPACE/tree/patches/$MANIFEST_BRANCH/"}"
-      echo "applying patches to $project at $(git -C "$project" rev-parse --short HEAD)"
-      git -C "$project" am --3way "$patch_dir"*.patch
-    done
     ;;
   *)
     echo "unknown flavor: $FLAVOR" >&2
@@ -37,6 +32,13 @@ if [ "$FLAVOR" = orangefox ]; then
   (cd "$src" && repo manifest -r -o "$WORK/manifest-pinned.xml")
   sed -i "s#<manifest>#<manifest>\n  <!-- OrangeFox/sync $fox_sync_commit -->#" "$WORK/manifest-pinned.xml"
 fi
+
+for patch_dir in "$GITHUB_WORKSPACE/tree/patches/$MANIFEST_BRANCH"/*/*/; do
+  [ -d "$patch_dir" ] || continue
+  project="${patch_dir#"$GITHUB_WORKSPACE/tree/patches/$MANIFEST_BRANCH/"}"
+  echo "applying patches to $project at $(git -C "$src/$project" rev-parse --short HEAD)"
+  git -C "$src/$project" am --3way "$patch_dir"*.patch
+done
 
 mkdir -p "$src/device/meizu"
 rsync -a --delete --exclude .git --exclude .github "$GITHUB_WORKSPACE/tree/" "$src/device/meizu/mblu21/"
