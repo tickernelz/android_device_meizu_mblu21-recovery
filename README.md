@@ -11,7 +11,15 @@ Recovery device tree for the Meizu mBlu 21, model M416H. One tree builds OrangeF
 
 ## Status
 
-**UNTESTED.** Nobody has booted these images on a phone. Every release is a pre-release with `UNTESTED` in its name. The only proof so far is the static check below, which runs in CI on every build.
+**OrangeFox boots and decrypts `/data` on the phone; SHRP-Reborn has not been tested.**
+
+| Recovery | Tested on the phone |
+|---|---|
+| OrangeFox `fox_16.0`, built locally from branch `fix/fox-legacy-drm` at `b3dbb0c`, resealed with the stock Meizu AVB blob | 2026-11-03, one M416H on LineageOS 24.0: the UI shows and responds to touch, a PIN set on LineageOS unlocks `/data` (`Data successfully decrypted`, `/data/media/0` file names readable), `adb` sees the phone in recovery, and Android still boots normally with the same `vendor_boot`. |
+| OrangeFox releases published so far, all built before `fix/fox-legacy-drm` | not tested; without that branch OrangeFox crash-loops on the boot logo |
+| SHRP-Reborn `shrp-12.1`, every release | not tested |
+
+Not tested on the phone yet, for either recovery: MTP, `adb sideload`, fastbootd, USB OTG, flashing a ZIP or image, backup and restore, battery, brightness, vibrator, OrangeFox OTA survival, and pressing Volume Down in recovery. Releases stay pre-releases; the ones not tested on the phone say `UNTESTED` in their name. CI runs the static check below on every build.
 
 ## How recovery lives on this phone
 
