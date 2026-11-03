@@ -14,7 +14,9 @@ import sys
 from elfinfo import parse as parse_elf
 
 VENDOR_PREFIXES = ("first_stage_ramdisk", "lib/modules")
-INTENDED_VENDOR_CHANGES = {"first_stage_ramdisk/fstab.ums9230_6h10"}
+INTENDED_VENDOR_CHANGES = {
+    "first_stage_ramdisk/fstab.ums9230_6h10": "2c39eaf6523050a7b5285afe4eabde5574d4190e519661a16b5066c509adcada",
+}
 HEADER_FORMAT = "<8sIIIII2048sI16sIIQIIII"
 HEADER_SIZE = struct.calcsize(HEADER_FORMAT)
 TABLE_ENTRY_FORMAT = "<III32s64s"
@@ -530,8 +532,9 @@ def check(image_path, reference_path, flavor, report_path, rom_fstab_path=None, 
     missing = sorted(set(stock_vendor) - set(built_vendor))
     extra = sorted(set(built_vendor) - set(stock_vendor))
     changed = sorted(name for name in set(stock_vendor) & set(built_vendor) if stock_vendor[name] != built_vendor[name])
-    intended = [name for name in changed if name in INTENDED_VENDOR_CHANGES]
-    changed = [name for name in changed if name not in INTENDED_VENDOR_CHANGES]
+    intended = [name for name in changed
+                if name in INTENDED_VENDOR_CHANGES and INTENDED_VENDOR_CHANGES[name] == built_vendor[name].get("sha256")]
+    changed = [name for name in changed if name not in intended]
     first_stage_fstab = by_name.get("first_stage_ramdisk/fstab.ums9230_6h10", {}).get("content", b"").decode(errors="replace")
     record("first_stage_fstab_without_avb", first_stage_fstab and "avb=" not in first_stage_fstab and "avb_keys=" not in first_stage_fstab,
            [line for line in first_stage_fstab.splitlines() if "avb" in line][:4])
